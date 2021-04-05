@@ -52,7 +52,7 @@ public class GroupVarintEncoder extends OutputStream {
 
         byte[] bytesToWrite = new byte[numBytes];
 
-        assert lengthByte == (byte)lengthByte;
+        assert lengthByte == (lengthByte & 0xff);
         bytesToWrite[0] = (byte)lengthByte;
         int bytesSet = 1;
 

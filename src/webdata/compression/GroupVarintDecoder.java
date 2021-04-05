@@ -35,7 +35,7 @@ public class GroupVarintDecoder extends InputStream {
         }
         assert bytesRead == 1;
 
-        byte[] lengths = MASK_TO_LENGTHS[buf[0]];
+        byte[] lengths = MASK_TO_LENGTHS[buf[0] & 0xff];
 
         for (int i=0; i < 4; ++i) {
             bytesRead = inputStream.readNBytes(buf, 0, lengths[i]);

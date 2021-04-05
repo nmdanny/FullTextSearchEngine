@@ -85,4 +85,36 @@ class GroupVarintEncoderTest {
         assertEquals(-1, num5);
     }
 
+    @Test
+    void canEncodeAndDecodeFullGroupHuge() throws IOException
+    {
+        var os = new ByteArrayOutputStream();
+        var encoder = new GroupVarintEncoder(os);
+        encoder.write(2147483647);
+        encoder.write(2011185518);
+        encoder.write(16777216);
+        encoder.write(176414542);
+        encoder.flush();
+
+        var binary = os.toByteArray();
+        assertEquals(17, binary.length);
+
+        assertEquals(255, binary[0] & 0xff);
+
+        var is = new ByteArrayInputStream(binary);
+        var decoder = new GroupVarintDecoder(is);
+
+        int num1 = decoder.read();
+        assertEquals(2147483647, num1);
+        int num2 = decoder.read();
+        assertEquals(2011185518, num2);
+        int num3 = decoder.read();
+        assertEquals(16777216, num3);
+        int num4 = decoder.read();
+        assertEquals(176414542, num4);
+
+        int next = decoder.read();
+        assertEquals(-1, next);
+
+    }
 }
