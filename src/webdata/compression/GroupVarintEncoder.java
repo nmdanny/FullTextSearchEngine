@@ -2,26 +2,31 @@ package webdata.compression;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 
-/** An encoder for encoding integers between 1-4 bytes(up to 2^32) using a variable amount of bytes */
+/** An encoder for encoding positive integers between 1-4 bytes(up to 2^32) using a variable amount of bytes
+ *  Note that the value 0 cannot be encoded, but this is OK because we're encoding gaps, which cannot be 0.
+ **/
 public class GroupVarintEncoder extends OutputStream {
 
-    private OutputStream outputStream;
+    private final OutputStream outputStream;
 
     // Holds up to 4 numbers
-    private int[] numbers;
+    private final int[] numbers;
     private int numbersInGroup;
 
     static final int BOUNDARY_8 =  1 << 8;
     static final int BOUNDARY_16 = 1 << 16;
     static final int BOUNDARY_24 = 1 << 24;
 
-    private void writeFullGroup() throws IOException
+    private void writeGroup() throws IOException
     {
-        assert numbersInGroup == 4;
+        if (numbersInGroup == 0) {
+            return;
+        }
         int lengthByte = 0;
         int numBytes = 1;
-        for (int i=0; i < numbersInGroup; ++i)
+        for (int i=0; i < 4; ++i)
         {
             int num = numbers[i];
             if (num < BOUNDARY_8)
@@ -51,7 +56,7 @@ public class GroupVarintEncoder extends OutputStream {
         bytesToWrite[0] = (byte)lengthByte;
         int bytesSet = 1;
 
-        for (int i=0; i < numbersInGroup; ++i)
+        for (int i=0; i < 4; ++i)
         {
             int num = numbers[i];
             // use big endian encoding, so the largest parts begin first
@@ -75,7 +80,7 @@ public class GroupVarintEncoder extends OutputStream {
         outputStream.write(bytesToWrite);
 
         // no need to zero array, as next calls to write will just overwrite its contents
-        this.numbersInGroup = 0;
+        numbersInGroup = 0;
     }
 
     @Override
@@ -83,13 +88,16 @@ public class GroupVarintEncoder extends OutputStream {
     {
         assert numbersInGroup <= 4;
 
-        if (numbersInGroup == 4)
+        if (numbersInGroup != 4)
         {
-            writeFullGroup();
+            // if the group has less than 4 elements
+            // then numbers[numbersInGroup .. 4) might include junk/values from previous group,
+            // zero them as 0 is a sentinel value indicating the stream has finished
+            Arrays.fill(numbers, numbersInGroup, numbers.length, 0);
         }
-
-        else {
-            System.err.println("TODO write non full group");
+        if (numbersInGroup != 0)
+        {
+            writeGroup();
         }
 
         outputStream.flush();
@@ -113,11 +121,14 @@ public class GroupVarintEncoder extends OutputStream {
     @Override
     public void write(int number) throws IOException
     {
+        if (number <= 0) {
+            throw new IllegalArgumentException("Cannot encode zero or negative numbers");
+        }
         numbers[numbersInGroup] = number;
         numbersInGroup++;
         if (numbersInGroup == 4)
         {
-            writeFullGroup();
+            writeGroup();
         }
     }
 }

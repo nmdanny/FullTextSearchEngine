@@ -1,0 +1,10 @@
+lengths:
+[1,2,3,1] = 00011000 = 11000
+
+group	length	bytes(signed byte)	bytes(signed int == unsigned byte)	bytes(binary)
+10	1	10			1010					1010
+990	2	3 -34			11 222					11 11011110
+99000 	3	1 -126 -72		1 130 184				1 100000010 10111000
+1	1	1			1					1
+
+
