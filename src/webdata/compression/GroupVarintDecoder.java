@@ -55,6 +55,12 @@ public class GroupVarintDecoder extends InputStream {
         return true;
     }
 
+    /**
+     * Reads an integer encoded via group varint encoding. Unlike the usual contract of InputStream.read, returned numbers
+     * might utilize 31 bits. -1 is returned in case there are no more numbers to decode.
+     * @return A positive integer
+     * @throws IOException In case the backing stream throws
+     */
     @Override
     public int read() throws IOException {
         if (posInGroup == -1 || posInGroup == 4) {

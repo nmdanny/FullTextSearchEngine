@@ -52,6 +52,7 @@ public class GroupVarintEncoder extends OutputStream {
 
         byte[] bytesToWrite = new byte[numBytes];
 
+        // ensure the length byte(encoded in an int) only uses the 8 lowest bits
         assert lengthByte == (lengthByte & 0xff);
         bytesToWrite[0] = (byte)lengthByte;
         int bytesSet = 1;
@@ -62,18 +63,18 @@ public class GroupVarintEncoder extends OutputStream {
             // use big endian encoding, so the largest parts begin first
             if (num >= BOUNDARY_24)
             {
-                bytesToWrite[bytesSet++] = (byte)(num >> 24);
+                bytesToWrite[bytesSet++] = (byte)((num >>> 24) & 0xff);
             }
             if (num >= BOUNDARY_16)
             {
-                bytesToWrite[bytesSet++] = (byte)(num >> 16);
+                bytesToWrite[bytesSet++] = (byte)((num >>> 16) & 0xff);
 
             }
             if (num >= BOUNDARY_8)
             {
-                bytesToWrite[bytesSet++] = (byte)(num >> 8);
+                bytesToWrite[bytesSet++] = (byte)((num >>> 8) & 0xff);
             }
-            bytesToWrite[bytesSet++] = (byte)(num);
+            bytesToWrite[bytesSet++] = (byte)(num & 0xff);
         }
 
         assert bytesSet == numBytes;
@@ -118,6 +119,11 @@ public class GroupVarintEncoder extends OutputStream {
         this.numbersInGroup = 0;
     }
 
+    /** Allows writing an arbitrary integer. In contrast to the usual contract of OutputStream.write(int), numbers
+     *  might utilize 31 bits. Negative and zero numbers cannot be encoded.
+     * @param number A positive integer
+     * @throws IOException In case the backing stream throws
+     */
     @Override
     public void write(int number) throws IOException
     {
