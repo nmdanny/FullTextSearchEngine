@@ -5,7 +5,10 @@ import java.io.OutputStream;
 import java.util.Arrays;
 
 /** An encoder for encoding positive integers between 1-4 bytes(up to 2^32) using a variable amount of bytes
- *  Note that the value 0 cannot be encoded, but this is OK because we're encoding gaps, which cannot be 0.
+ *  Note that the value 0 cannot be encoded, as it is a sentinel value, acting as delimiter between posting lists or
+ *  doubles as EOF in case the last group has less than 4 elements.
+ *
+ *  (This is OK in practice as we're encoding gaps/frequencies, which cannot be 0.)
  **/
 public class GroupVarintEncoder extends OutputStream {
 
@@ -103,6 +106,27 @@ public class GroupVarintEncoder extends OutputStream {
 
         outputStream.flush();
 
+    }
+
+
+    private static final byte[] ALL_ZEROS = new byte[]{0, 0, 0, 0, 0};
+
+    /** Resets the stream, which is similar to flushing, but ensures a 0 is written at the end.
+     * @throws IOException
+     */
+    public void reset() throws IOException
+    {
+        if (numbersInGroup == 4)
+        {
+            flush();
+            // If the last group(and thus all previous groups) is of size 4, then we haven't written any 0 value. We
+            // need a delimiter value(doubles as EOF) so we explicitly write a 0.
+            outputStream.write(ALL_ZEROS);
+        } else
+        {
+            // Otherwise, a 0 was already written in the last group.
+            flush();
+        }
     }
 
     @Override

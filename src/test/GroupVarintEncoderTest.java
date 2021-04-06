@@ -77,9 +77,10 @@ class GroupVarintEncoderTest {
         assertEquals(990, num2);
 
         int num3 = decoder.read();
-        assertEquals(-1, num3);
+        assertEquals(0, num3);
+
         int num4 = decoder.read();
-        assertEquals(-1, num4);
+        assertEquals(0, num4);
 
         int num5 = decoder.read();
         assertEquals(-1, num5);
