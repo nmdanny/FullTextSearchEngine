@@ -1,4 +1,4 @@
-package webdata.dictionary;
+package webdata.inverted_index;
 
 import webdata.compression.GroupVarintEncoder;
 
