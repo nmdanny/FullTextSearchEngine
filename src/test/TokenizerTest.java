@@ -25,6 +25,14 @@ class TokenizerTest {
         };
 
         assertArrayEquals(Tokenizer.tokenize(input), expectedTokens);
+    }
 
+    @Test
+    void unicodeTokenizationWorks() {
+        String input = "שלום עולם, זה טקסט";
+        String[] expectedTokens = new String[] {
+                "שלום", "עולם", "זה", "טקסט"
+        };
+        assertArrayEquals(Tokenizer.tokenize(input, true), expectedTokens);
     }
 }
