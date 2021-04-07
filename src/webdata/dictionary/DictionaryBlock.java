@@ -13,8 +13,8 @@ public class DictionaryBlock {
     private final Dictionary dictionary;
     private byte numFilledElements;
 
-    private FirstBlockElement firstBlockElement;
-    private final OtherBlockElement[] otherBlockElements;
+    FirstBlockElement firstBlockElement;
+    final OtherBlockElement[] otherBlockElements;
 
     public DictionaryBlock(Dictionary dictionary) {
         this.dictionary = dictionary;
@@ -23,12 +23,12 @@ public class DictionaryBlock {
         this.firstBlockElement.dictionary = dictionary;
         this.otherBlockElements = new OtherBlockElement[BLOCK_SIZE - 1];
         for (int i=0; i < this.otherBlockElements.length; ++i) {
-            this.otherBlockElements[i] = OtherBlockElement.NullElement(dictionary, this.firstBlockElement);
+            this.otherBlockElements[i] = OtherBlockElement.NullElement(dictionary, this, i+1);
         }
     }
 
     public boolean full() {
-        return numFilledElements != BLOCK_SIZE;
+        return numFilledElements == BLOCK_SIZE;
     }
 
     /** Gets the next free dictionary element, and increments the filled element counter.
@@ -52,7 +52,6 @@ public class DictionaryBlock {
         }
         var block = otherBlockElements[numFilledElements - 1];
         block.dictionary = dictionary;
-        block.firstBlockElement = firstBlockElement;
         block.termLength = termLength;
         block.frequency = documentFrequency;
         block.postingPtr = postingPtr;
@@ -82,7 +81,7 @@ public class DictionaryBlock {
         block.numFilledElements = in.readByte();
         block.firstBlockElement = FirstBlockElement.deserialize(in, dictionary);
         for (int i=0; i < BLOCK_SIZE - 1; ++i) {
-            block.otherBlockElements[i] = OtherBlockElement.deserialize(in, dictionary, block.firstBlockElement);
+            block.otherBlockElements[i] = OtherBlockElement.deserialize(in, dictionary, block, i + 1);
         }
         return block;
     }
