@@ -73,11 +73,6 @@ public class GroupVarintDecoder extends InputStream {
         int value = curGroup[posInGroup];
         posInGroup++;
 
-        // A value of 0 is impossible(gaps/frequencies must be positive), so it
-        // represents a group shorter than 4. Nothing to read, so return -1
-        if (value == 0) {
-            return -1;
-        }
         return value;
     }
 
