@@ -1,4 +1,4 @@
-package webdata;
+package webdata.dictionary;
 
 import webdata.compression.GroupVarintEncoder;
 
@@ -16,6 +16,7 @@ public class PostingListWriter implements Closeable, Flushable {
     private int lastDocId;
     private String curTerm;
     private int curDocumentFrequency;
+    private int curPostingPtr;
 
     public PostingListWriter(FileOutputStream fileOutputStream, BufferedOutputStream outputStream) {
         this.fileChannel = fileOutputStream.getChannel();
@@ -24,6 +25,7 @@ public class PostingListWriter implements Closeable, Flushable {
         this.lastDocId = 0;
         this.curTerm = null;
         this.curDocumentFrequency = 0;
+        this.curPostingPtr = 0;
     }
 
     /**
@@ -35,6 +37,9 @@ public class PostingListWriter implements Closeable, Flushable {
     {
         if (Objects.isNull(curTerm)) {
             throw new IllegalStateException("Cannot add a posting list entry if no term was set");
+        }
+        if (docId == 0) {
+            throw new IllegalArgumentException("docIds cannot be 0");
         }
         if (docId <= lastDocId) {
             throw new IllegalArgumentException("docIds must be inserted in an increasing order");
@@ -62,23 +67,34 @@ public class PostingListWriter implements Closeable, Flushable {
         curDocumentFrequency = 0;
         long pos = fileChannel.position();
         assert (int)pos == pos;
-        return (int)pos;
+        curPostingPtr = (int)pos;
+        return curPostingPtr;
     }
 
-    /** Returns the number of documents in which the current term was seen */
+    /** Returns the number of documents in which the current term was seen/the length of the current posting list */
     public int getCurrentTermDocumentFrequency() {
+        if (curTerm == null) {
+            throw new IllegalStateException("Cannot get document term frequency before starting a term");
+        }
         return curDocumentFrequency;
     }
 
-    /** Returns the current term whose posting lists we're building */
+    /** Returns the current term whose posting lists we're building, or null if no term was yet added. */
     public String getCurrentTerm() {
        return curTerm;
     }
 
+    public int getCurPostingPtr() {
+        if (curTerm == null) {
+            throw new IllegalStateException("Cannot get posting pointer before starting a term");
+        }
+        return curPostingPtr;
+    }
+
     @Override
     public void close() throws IOException {
-        this.fileChannel.close();
         this.encoder.close();
+        this.fileChannel.close();
     }
 
     @Override

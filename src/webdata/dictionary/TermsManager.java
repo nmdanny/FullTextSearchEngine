@@ -9,7 +9,6 @@ import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
 
 /** A tuple containing the position and length(in bytes) of some term which was saved in the file */
 class TermAllocationResult {
@@ -24,19 +23,22 @@ class TermAllocationResult {
 
 /** Manages random access to terms (reading and writing) via memory mapped file */
 public class TermsManager implements Closeable, Flushable {
-    private static final String TERMS_FILE_NAME = "terms.bin";
-    private static final int MMAP_SIZE = Integer.MAX_VALUE;
+    private static final int DEFAULT_MMAP_SIZE = Integer.MAX_VALUE;
     private final Charset charset;
 
     private final RandomAccessFile randomAccessFile;
     private final FileChannel fileChannel;
     private final MappedByteBuffer page;
 
-    public TermsManager(String dir, Charset charset) throws IOException {
+    public TermsManager(String file, Charset charset) throws IOException {
+        this(file, charset, DEFAULT_MMAP_SIZE);
+    }
+
+    public TermsManager(String file, Charset charset, int mmapSize) throws IOException {
         this.charset = charset;
-        this.randomAccessFile = new RandomAccessFile(Path.of(dir, TERMS_FILE_NAME).toString(), "rw");
+        this.randomAccessFile = new RandomAccessFile(file, "rw");
         this.fileChannel = randomAccessFile.getChannel();
-        this.page = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, MMAP_SIZE);
+        this.page = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, mmapSize);
     }
 
     /** Allocates a new term into the terms file and memory, returning a term pointer */

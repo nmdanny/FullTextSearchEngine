@@ -11,12 +11,23 @@ import java.nio.CharBuffer;
 class OtherBlockElement implements DictionaryElement {
 
 
-    private Dictionary dictionary;
-    private FirstBlockElement firstBlockElement;
+    Dictionary dictionary;
+    FirstBlockElement firstBlockElement;
+    int frequency;
+    int postingPtr;
+    int termLength;
 
-    private int frequency;
-    private int postingPtr;
-    private int termLength;
+    public OtherBlockElement(Dictionary dictionary, FirstBlockElement firstBlockElement, int frequency, int postingPtr, int termLength) {
+        this.dictionary = dictionary;
+        this.firstBlockElement = firstBlockElement;
+        this.frequency = frequency;
+        this.postingPtr = postingPtr;
+        this.termLength = termLength;
+    }
+
+    public static OtherBlockElement NullElement(Dictionary dictionary, FirstBlockElement firstBlockElement) {
+        return new OtherBlockElement(dictionary, firstBlockElement, -1, -1, -1);
+    }
 
     @Override
     public void setDictionary(Dictionary dictionary) {
@@ -51,11 +62,10 @@ class OtherBlockElement implements DictionaryElement {
         out.writeInt(termLength);
     }
 
-    public static OtherBlockElement deserialize(DataInputStream in) throws IOException {
-        var element = new OtherBlockElement();
-        element.frequency = in.readInt();
-        element.postingPtr = in.readInt();
-        element.termLength = in.readInt();
-        return element;
+    public static OtherBlockElement deserialize(DataInputStream in, Dictionary dictionary, FirstBlockElement firstBlockElement) throws IOException {
+        int frequency = in.readInt();
+        int postingPtr = in.readInt();
+        int termLength= in.readInt();
+        return new OtherBlockElement(dictionary, firstBlockElement, frequency, postingPtr, termLength);
     }
 }

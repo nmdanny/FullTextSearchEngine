@@ -1,7 +1,5 @@
 package webdata.dictionary;
 
-import webdata.PostingListWriter;
-
 import java.io.*;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
@@ -12,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 /** The dictionary is held within memory in a compressed form
  *
@@ -27,10 +26,7 @@ public class Dictionary implements Closeable, Flushable {
 
     // Contains the terms
     private static final String TERMS_FILE_NAME = "terms.bin";
-    private final RandomAccessFile termsFile;
-    private final FileChannel termsFileChannel;
-    // TODO: doesn't support having strings take more than ~2gb
-    private final MappedByteBuffer termsBuf;
+    private final TermsManager termsManager;
 
     // Contains the postings
     private static final String POSTINGS_FILE_NAME = "postings.bin";
@@ -39,14 +35,21 @@ public class Dictionary implements Closeable, Flushable {
     private static final Charset ENCODING = StandardCharsets.ISO_8859_1;
     private static final int BLOCK_SIZE = 4;
 
+
+    private String curTerm;
+    private int curTermPostingPtr;
     private int totalNumberOfTokens;
+    private int uniqueNumberOfTokens;
 
     /**
-     * Loads a dictionary(if directory exists), otherwise creates one
-     * @param dir Directory
-     * @throws IOException
+     * Loads a dictionary(if directory exists), otherwise creates one.
+     *
+     * @param dir Directory of index files
+     * @param encoding Encoding of terms
+     * @param mmapSize Size of memory mapped file containing terms
+     * @throws IOException In case of IO error
      */
-    public Dictionary(String dir) throws IOException {
+    public Dictionary(String dir, Charset encoding, int mmapSize) throws IOException {
         this.dir = dir;
 
         if (dir.contains(TERMS_FILE_NAME) && dir.contains(POSTINGS_FILE_NAME)) {
@@ -57,23 +60,20 @@ public class Dictionary implements Closeable, Flushable {
             var postingsFos = new FileOutputStream(Paths.get(dir, POSTINGS_FILE_NAME).toString());
             var postingsOs = new BufferedOutputStream(postingsFos);
             this.postingListWriter = new PostingListWriter(postingsFos, postingsOs);
+            this.termsManager = new TermsManager(Paths.get(dir, TERMS_FILE_NAME).toString(), encoding, mmapSize);
 
             this.blocks = new ArrayList<>();
+            this.curTerm = null;
+            this.curTermPostingPtr = 0;
             this.totalNumberOfTokens = 0;
+            this.uniqueNumberOfTokens = 0;
 
-
-            termsFile = new RandomAccessFile(Paths.get(dir, TERMS_FILE_NAME).toString(), "rw");
-            termsFileChannel = termsFile.getChannel();
-            this.termsBuf = termsFileChannel.map(FileChannel.MapMode.READ_WRITE, 0, Integer.MAX_VALUE);
         }
     }
 
-    /** Given a term pointer and length, returns the term. */
+    /** Given a term pointer and length(in bytes), returns the term. */
     public CharBuffer derefTermPointer(int termPointer, int termLength) {
-        var bytes = this.termsBuf.slice()
-                .position(termPointer)
-                .limit(termPointer + termLength);
-        return ENCODING.decode(bytes);
+        return this.termsManager.derefTerm(termPointer, termLength);
     }
 
     /** Begins a new term */
@@ -82,14 +82,39 @@ public class Dictionary implements Closeable, Flushable {
         {
             throw new IllegalArgumentException("Terms must be written into dictionary in lexicographically increasing order");
         }
-        // If this isn't the first term
-        if (totalNumberOfTokens > 0) {
-            endTerm();
-        }
-        postingListWriter.startTerm(term);
+        // Finish the previous term(if there was any)
+        endTerm();
+        curTerm = term;
+        curTermPostingPtr = postingListWriter.startTerm(term);
+        uniqueNumberOfTokens++;
     }
 
     public void endTerm() throws IOException {
+        if (curTerm == null) {
+            return;
+        }
+        if (postingListWriter.getCurrentTermDocumentFrequency() == 0) {
+            throw new IllegalStateException("You cannot end a term which has an empty posting list");
+        }
+        DictionaryBlock block;
+        if (blocks.isEmpty() || blocks.get(blocks.size() - 1).full()) {
+            block = new DictionaryBlock(this);
+            blocks.add(block);
+        } else {
+            block = blocks.get(blocks.size() - 1);
+        }
+
+        var termAllocationResult = termsManager.allocateTerm(postingListWriter.getCurrentTerm());
+
+        block.fillNewDictionaryElement(
+                termAllocationResult.position,
+                termAllocationResult.length,
+                postingListWriter.getCurrentTermDocumentFrequency(),
+                curTermPostingPtr
+        );
+
+        curTerm = null;
+        curTermPostingPtr = 0;
 
     }
 
@@ -103,18 +128,34 @@ public class Dictionary implements Closeable, Flushable {
     }
 
     public void addTermOccurence(int docId, int freqInDoc) throws IOException {
+        totalNumberOfTokens += freqInDoc;
         postingListWriter.add(docId, freqInDoc);
+    }
+
+    /** Returns a stream over all dictionary elements */
+    public Stream<DictionaryElement> stream() {
+        return blocks.stream().flatMap(DictionaryBlock::stream);
+    }
+
+    /** Returns the number of tokens(including repetitions) seen in the dictionary */
+    public int getTotalNumberOfTokens() {
+        return totalNumberOfTokens;
+    }
+
+    /** Returns the number of different tokens in the dictionary.  */
+    public int getUniqueNumberOfTokens() {
+        return uniqueNumberOfTokens;
     }
 
     @Override
     public void close() throws IOException {
         postingListWriter.close();
-        termsFileChannel.close();
-        termsFile.close();
+        termsManager.close();;
     }
 
     @Override
     public void flush() throws IOException {
-        termsFileChannel.force(true);
+        postingListWriter.flush();
+        termsManager.flush();
     }
 }

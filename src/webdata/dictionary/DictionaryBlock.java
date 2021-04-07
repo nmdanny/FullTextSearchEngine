@@ -2,19 +2,29 @@ package webdata.dictionary;
 
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 
 /** A constant sized block containing BLOCK_SIZE elements */
 public class DictionaryBlock {
     private static final int BLOCK_SIZE = 4;
 
+    private final Dictionary dictionary;
     private byte numFilledElements;
-    private FirstBlockElement firstBlockElement;
-    private OtherBlockElement[] otherBlockElements;
 
-    public DictionaryBlock() {
+    private FirstBlockElement firstBlockElement;
+    private final OtherBlockElement[] otherBlockElements;
+
+    public DictionaryBlock(Dictionary dictionary) {
+        this.dictionary = dictionary;
         this.numFilledElements = 0;
+        this.firstBlockElement = FirstBlockElement.NullElement(dictionary);
+        this.firstBlockElement.dictionary = dictionary;
         this.otherBlockElements = new OtherBlockElement[BLOCK_SIZE - 1];
+        for (int i=0; i < this.otherBlockElements.length; ++i) {
+            this.otherBlockElements[i] = OtherBlockElement.NullElement(dictionary, this.firstBlockElement);
+        }
     }
 
     public boolean full() {
@@ -23,20 +33,40 @@ public class DictionaryBlock {
 
     /** Gets the next free dictionary element, and increments the filled element counter.
      *
-     * @return
+     * @return The element which was just filled
      */
     public DictionaryElement fillNewDictionaryElement(
-            String term, int documentFrequency, int postingPtr
+            int termPointer, int termLength, int documentFrequency, int postingPtr
     ) {
         if (numFilledElements == BLOCK_SIZE) {
             throw new IllegalStateException("Cannot get a dictionary element as this block is full");
         }
         if (numFilledElements == 0) {
+            firstBlockElement.dictionary = dictionary;
+            firstBlockElement.termPointer = termPointer;
+            firstBlockElement.termLength = termLength;
+            firstBlockElement.frequency = documentFrequency;
+            firstBlockElement.postingPtr = postingPtr;
+            ++numFilledElements;
             return firstBlockElement;
         }
-        return otherBlockElements[numFilledElements - 1];
+        var block = otherBlockElements[numFilledElements - 1];
+        block.dictionary = dictionary;
+        block.firstBlockElement = firstBlockElement;
+        block.termLength = termLength;
+        block.frequency = documentFrequency;
+        block.postingPtr = postingPtr;
+        ++numFilledElements;
+        return block;
     }
 
+    /** Returns a stream over all filled dictionary elements */
+    public Stream<DictionaryElement> stream() {
+        if (numFilledElements == 0) {
+            return Stream.empty();
+        }
+        return Stream.concat(Stream.of(firstBlockElement), Arrays.stream(otherBlockElements).limit(numFilledElements - 1));
+    }
 
     public void serialize(DataOutputStream out) throws IOException {
         out.writeByte(numFilledElements);
@@ -47,12 +77,12 @@ public class DictionaryBlock {
         }
     }
 
-    public static DictionaryBlock deserialize(DataInputStream in) throws IOException {
-        var block = new DictionaryBlock();
+    public static DictionaryBlock deserialize(DataInputStream in, Dictionary dictionary) throws IOException {
+        var block = new DictionaryBlock(dictionary);
         block.numFilledElements = in.readByte();
-        block.firstBlockElement = FirstBlockElement.deserialize(in);
+        block.firstBlockElement = FirstBlockElement.deserialize(in, dictionary);
         for (int i=0; i < BLOCK_SIZE - 1; ++i) {
-            block.otherBlockElements[i] = OtherBlockElement.deserialize(in);
+            block.otherBlockElements[i] = OtherBlockElement.deserialize(in, dictionary, block.firstBlockElement);
         }
         return block;
     }

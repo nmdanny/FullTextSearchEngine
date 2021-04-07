@@ -14,9 +14,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class TermsManagerTest {
     @Test
     void canAllocAndDeref() throws IOException {
-        var dir = Path.of("E:\\");
-        var manager = new webdata.dictionary.TermsManager(dir.toString(), StandardCharsets.UTF_8);
+        var path = Files.createTempFile("termsManagerTest", "small");
+        var manager = new webdata.dictionary.TermsManager(path.toString(), StandardCharsets.UTF_8, 1024);
 
+        // technically not terms, but TermManager doesn't really care about the order or contents
         var strings = new String[] {
                 "hey",
                 "shalom",

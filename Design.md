@@ -34,7 +34,27 @@ an issue as we don't need this capability for a posting list.
 
 ## Dictionary
 
-I will use the 'blocking' method for compressing the dictionary. 
+I will use the 'blocking' method for compressing the dictionary. While using the (k-1)-in-k method would've been more memory
+efficient, due to time constraints I will not implement it. However, the strings file will be kept in a memory map as explained
+below, which should improve memory usage.
+
+## Use of memory mapping
+
+All terms/tokens will be kept in a memory mapped file - this has several benefits:
+
+- Easier to program: We don't need to manually handle persisting the strings, this is automatically done whenever we
+  modify the file (assuming we eventually flush/close it). We can treat the file like an ordinary array. And if the number
+
+- Ensures low memory usage even when the number of strings is very large, at the cost of disk IO.
+  
+- More efficient in contrast to usual Java IO: 
+  - Reading/writing from a memory mapped file doesn't require costly sys-calls, and can utilize various kinds of caches
+    more efficiently than if we had used standard IO operations. 
+    
+  - Separation of concerns - instead of manually deciding how to buffer data, we essentially let the OS handle this.
+    On a system with a lot of RAM or a sufficiently small number of unique tokens, the OS would probably choose to load many(or even all)
+    of the file's pages into disk, and in the opposite case, we'd simply encounter page faults more frequently.
+  
 
 ## Object Storage
 

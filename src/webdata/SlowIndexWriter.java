@@ -21,7 +21,7 @@ public class SlowIndexWriter {
 	*/
 	public void slowWrite(String inputFile, String dir) {
 		try {
-		    var dict = new Dictionary(dir);
+		    var dict = new Dictionary(dir, StandardCharsets.ISO_8859_1, Integer.MAX_VALUE);
 		    int bufSize = 1 << 16;
 		    int numBufs = 4;
 			Charset encoding = StandardCharsets.ISO_8859_1;
