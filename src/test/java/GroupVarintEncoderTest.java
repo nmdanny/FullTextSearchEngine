@@ -1,18 +1,79 @@
-package test;
+//package test;
 
 import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+
+
 import webdata.compression.GroupVarintDecoder;
 import webdata.compression.GroupVarintEncoder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class GroupVarintEncoderTest {
+    static void ensureCanEncodeAndDecodeIntegers(List<Integer> numbers) throws IOException {
+        var os = new ByteArrayOutputStream();
+        var encoder = new GroupVarintEncoder(os);
+
+        for (var num: numbers) {
+            encoder.write(num);
+        }
+
+        encoder.flush();
+        var is = new ByteArrayInputStream(os.toByteArray());
+        var decoder = new GroupVarintDecoder(is);
+
+        for(int i=0; i < numbers.size(); ++i) {
+            var decoded = decoder.read();
+            assertEquals(numbers.get(i), decoded);
+        }
+
+        int numZeros = 0;
+        int decoded;
+        do {
+            decoded = decoder.read();
+            numZeros++;
+        } while (decoded == 0);
+        numZeros--;
+        assertEquals(-1, decoded);
+        assertTrue(numZeros <= 3);
+    }
+
+
+    private static Stream<List<Integer>> provideNumbers() {
+
+        var lists = Stream.of(
+                List.<Integer>of(),
+                List.of(10, 99),
+                List.of(1,2,3,4,5,6,7,8,9,10),
+                List.of(9,1000,100,5000,100000,125255600)
+        );
+
+        return lists.flatMap(list -> {
+            return IntStream.range(1, list.size() + 1).mapToObj(length -> list
+                    .stream()
+                    .limit(length)
+                    .collect(Collectors.toList()));
+        });
+
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideNumbers")
+    void canEncodeAndDecodeIntegers(List<Integer> numbers) throws IOException {
+        ensureCanEncodeAndDecodeIntegers(numbers);
+    }
+
+
     @Test
     void canEncodeAndDecodeFullGroup() throws IOException
     {
