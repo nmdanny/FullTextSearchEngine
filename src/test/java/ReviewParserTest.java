@@ -1,5 +1,6 @@
 package test;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import webdata.Review;
 import webdata.parsing.ParallelReviewParser;
@@ -60,6 +61,7 @@ class ReviewParserTest {
         assertEquals(92427, count);
     }
 
+    @Disabled
     @Test
     void canParse1GbDataset() throws IOException {
         int bufSize = 1024 * 1024 * 25;
@@ -71,6 +73,7 @@ class ReviewParserTest {
 
     }
 
+    @Disabled
     @Test
     void canParse2GbDataset() throws IOException {
         int bufSize = 1024 * 1024 * 25;
@@ -109,6 +112,7 @@ class ReviewParserTest {
 
     }
 
+    @Disabled
     @Test
     void canParse4GbDataset() throws IOException {
         int bufSize = 1024 * 1024 * 25;
@@ -122,6 +126,7 @@ class ReviewParserTest {
 
 
 
+    @Disabled
     @Test
     void canParse8GbDataset() throws IOException {
         int bufSize = 1024 * 1024 * 25;
