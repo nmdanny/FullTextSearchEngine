@@ -28,7 +28,7 @@ public class PostingListReader implements Closeable {
     }
 
     /** Returns the posting list at given pointer as a stream of integers(without caring about what they convey) */
-    public IntStream readIntegers(int postingPtr) throws IOException {
+    public IntStream readIntegers(int postingPtr, int frequency) throws IOException {
         postingsFile.seek(postingPtr);
         var stream = Channels.newInputStream(fileChannel);
         final var decoder = new GroupVarintDecoder(stream);
@@ -40,7 +40,7 @@ public class PostingListReader implements Closeable {
                 System.err.format("Error while reading integers at ptr %d: %s", postingPtr, e);
                 return -1;
             }
-        }).skip(1);
+        }).skip(1).limit(frequency);
     }
 
     @Override

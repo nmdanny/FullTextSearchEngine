@@ -59,7 +59,7 @@ public class Dictionary implements Closeable, Flushable {
 
             var postingsFos = new FileOutputStream(Paths.get(dir, POSTINGS_FILE_NAME).toString());
             var postingsOs = new BufferedOutputStream(postingsFos);
-            this.postingListWriter = new PostingListWriter(postingsFos, postingsOs);
+            this.postingListWriter = new PostingListWriter(postingsOs);
             this.termsManager = new TermsManager(Paths.get(dir, TERMS_FILE_NAME).toString(), encoding, mmapSize);
 
             this.blocks = new ArrayList<>();

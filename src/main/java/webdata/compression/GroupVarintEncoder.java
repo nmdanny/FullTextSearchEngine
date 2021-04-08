@@ -14,6 +14,8 @@ public class GroupVarintEncoder extends OutputStream {
 
     private final OutputStream outputStream;
 
+    private long numBytesWritten;
+
     // Holds up to 4 numbers
     private final int[] numbers;
     private int numbersInGroup;
@@ -21,6 +23,12 @@ public class GroupVarintEncoder extends OutputStream {
     static final int BOUNDARY_8 =  1 << 8;
     static final int BOUNDARY_16 = 1 << 16;
     static final int BOUNDARY_24 = 1 << 24;
+
+    /** Returns total number of bytes written(but not necessarily flushed)
+     *  by this decoder into its associated output stream. */
+    public long getTotalNumBytesWritten() {
+        return numBytesWritten;
+    }
 
     private void writeGroup() throws IOException
     {
@@ -82,6 +90,7 @@ public class GroupVarintEncoder extends OutputStream {
 
         assert bytesSet == numBytes;
         outputStream.write(bytesToWrite);
+        numBytesWritten += numBytes;
 
         // no need to zero array, as next calls to write will just overwrite its contents
         numbersInGroup = 0;
@@ -90,8 +99,20 @@ public class GroupVarintEncoder extends OutputStream {
     @Override
     public void flush() throws IOException
     {
-        assert numbersInGroup <= 4;
+        finishPreviousGroup();
+        outputStream.flush();
 
+    }
+
+
+//    private static final byte[] ALL_ZEROS = new byte[]{0, 0, 0, 0, 0};
+
+    /** Writes the current group(if any) into the stream
+     * @throws IOException In case of IO error
+     */
+    public void finishPreviousGroup() throws IOException
+    {
+        assert numbersInGroup <= 4;
         if (numbersInGroup != 4)
         {
             // if the group has less than 4 elements
@@ -102,30 +123,6 @@ public class GroupVarintEncoder extends OutputStream {
         if (numbersInGroup != 0)
         {
             writeGroup();
-        }
-
-        outputStream.flush();
-
-    }
-
-
-    private static final byte[] ALL_ZEROS = new byte[]{0, 0, 0, 0, 0};
-
-    /** Resets the stream, which is similar to flushing, but ensures a 0 is written at the end.
-     * @throws IOException
-     */
-    public void reset() throws IOException
-    {
-        if (numbersInGroup == 4)
-        {
-            flush();
-            // If the last group(and thus all previous groups) is of size 4, then we haven't written any 0 value. We
-            // need a delimiter value(doubles as EOF) so we explicitly write a 0.
-            outputStream.write(ALL_ZEROS);
-        } else
-        {
-            // Otherwise, a 0 was already written in the last group.
-            flush();
         }
     }
 
@@ -139,6 +136,7 @@ public class GroupVarintEncoder extends OutputStream {
     public GroupVarintEncoder(OutputStream outputStream)
     {
         this.outputStream = outputStream;
+        this.numBytesWritten = 0;
         this.numbers = new int[4];
         this.numbersInGroup = 0;
     }

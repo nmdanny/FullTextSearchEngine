@@ -22,15 +22,16 @@ an issue as we don't need this capability for a posting list.
 ### Implementation notes
 
 - The encoder is implemented as an `OutputStream` while the encoder is implemented as an `InputStream`.
-  This allows easily composing them with Java's file stream classes. 
+  This allows easily composing them with Java's stream classes, allowing to compress any binary stream.
 
 - At first glance, group variant encoding requires the number of elements to be divisible by 4,
   which won't necessarily happen. We handle this by using the number 0 (encoded as `0x00` in group varint) as
-  a sentinel value indicating that the stream has finished. This is OK because neither gaps nor frequencies
-  can be 0. 
+  a sentinel value indicating that the group has finished. This is OK because neither gaps nor frequencies
+  can be 0. (Since our groups consist of at most 4 integers, and each term occurrence consists of 2 integers,
+  we can either have no missing integers or exactly 2 missing integers.)
   
-  Since our groups consist of at most 4 integers, and each term occurrence consists of 2 integers,
-  we can either have no missing integers or exactly 2 missing integers. 
+  *In practice, this is unnecessary, since we record the token's document frequency alongside the posting pointer,
+  so we know exactly how many integers to read. But I kept this anyway for debugging purposes
 
 ## Dictionary
 

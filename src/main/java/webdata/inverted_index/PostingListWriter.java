@@ -9,18 +9,17 @@ import java.util.Objects;
 /** Used for writing posting lists */
 public class PostingListWriter implements Closeable, Flushable {
 
-    // only used to determine position within file
-    private final FileChannel fileChannel;
     private final GroupVarintEncoder encoder;
+    long curBytePos;
 
     private int lastDocId;
     private String curTerm;
     private int curDocumentFrequency;
     private int curPostingPtr;
 
-    public PostingListWriter(FileOutputStream fileOutputStream, BufferedOutputStream outputStream) {
-        this.fileChannel = fileOutputStream.getChannel();
+    public PostingListWriter(OutputStream outputStream) {
         this.encoder = new GroupVarintEncoder(outputStream);
+        this.curBytePos = 0;
 
         this.lastDocId = 0;
         this.curTerm = null;
@@ -58,15 +57,14 @@ public class PostingListWriter implements Closeable, Flushable {
      *  pointer to said posting list.*/
     public int startTerm(String term) throws IOException
     {
-        // If we already wrote a posting list, reset the encoder to ensure a 0 is written
-        if (lastDocId != 0) {
-            encoder.reset();
-        }
+        // If we already wrote a posting list, ensure the last group was written
+        encoder.finishPreviousGroup();
+
         lastDocId = 0;
         curTerm = term;
         curDocumentFrequency = 0;
-        long pos = fileChannel.position();
-        assert (int)pos == pos;
+        long pos = encoder.getTotalNumBytesWritten();
+        assert ((int)pos == pos) : String.format("Posting pointer for term %s is too large at %d, doesn't fit in an int", term, pos);
         curPostingPtr = (int)pos;
         return curPostingPtr;
     }
@@ -84,17 +82,9 @@ public class PostingListWriter implements Closeable, Flushable {
        return curTerm;
     }
 
-    public int getCurPostingPtr() {
-        if (curTerm == null) {
-            throw new IllegalStateException("Cannot get posting pointer before starting a term");
-        }
-        return curPostingPtr;
-    }
-
     @Override
     public void close() throws IOException {
         this.encoder.close();
-        this.fileChannel.close();
     }
 
     @Override
