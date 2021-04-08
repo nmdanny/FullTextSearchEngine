@@ -51,12 +51,16 @@ public class TermsManager implements Closeable, Flushable {
         return result;
     }
 
-    /** Dereferences the term at given position and length */
-    public CharBuffer derefTerm(int position, int length) {
-        ByteBuffer bytes = page.duplicate()
+    /** Dereferences the term at given position and length, treating it as bytes */
+    public ByteBuffer derefTermBytes(int position, int length) {
+        return page.duplicate()
                 .position(position)
                 .limit(position + length);
-        return charset.decode(bytes);
+    }
+
+    /** Dereferences the term at given position and length, also decoding it */
+    public CharBuffer derefTerm(int position, int length) {
+        return charset.decode(derefTermBytes(position, length));
     }
 
     public CharBuffer derefTerm(TermAllocationResult alloc) {
