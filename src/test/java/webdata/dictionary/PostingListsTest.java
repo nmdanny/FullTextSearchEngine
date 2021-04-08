@@ -71,22 +71,19 @@ public class PostingListsTest {
 
         writer.close();
 
-        var fileRaf = new RandomAccessFile(file.toString(), "r");
-        var reader = new PostingListReader(fileRaf);
+        var reader = new PostingListReader(file.toString());
 
         for (var entry: docIds.entrySet()) {
             var pointer = termToPostingPtr.get(entry.getKey());
             var frequency = entry.getValue().size() * 2;
-            var numbersIt = reader.readIntegers(pointer, frequency).iterator();
-            int curDocId = 0;
+            var numbersIt = reader.readDocIdFreqPairs(pointer, frequency);
             for (var docIdAndFreq: entry.getValue()) {
-                curDocId += numbersIt.nextInt();
-                int freq = numbersIt.nextInt();
-                assertEquals(docIdAndFreq[0], curDocId);
+                int docId = numbersIt.nextElement();
+                int freq = numbersIt.nextElement();
+                assertEquals(docIdAndFreq[0], docId);
                 assertEquals(docIdAndFreq[1], freq);
             }
         }
 
-        reader.close();
     }
 }
