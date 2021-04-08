@@ -44,7 +44,11 @@ public class InMemoryDictionaryBuilder {
 
     public void finish() throws IOException {
         String curTerm = null;
-        occurrences.sort(Comparator.comparing(occ -> occ.term));
+        // TODO: if I compare via CharBuffer, modify
+        //       the first comparator accordingly
+        Comparator<TermOccurrence> comparator = Comparator.comparing(occ -> occ.term);
+        comparator = comparator.thenComparingInt(occ -> occ.docId);
+        occurrences.sort(comparator);
         for (var occurence: occurrences) {
             if (!occurence.term.equals(curTerm)) {
                 curTerm = occurence.term;
