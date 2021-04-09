@@ -14,17 +14,21 @@ import java.util.stream.StreamSupport;
 public class InMemoryReviewParser implements Iterator<Review> {
     // Used to parse a field of a product review
     private final Pattern FIELD_PATTERN = Pattern.compile(
-            "(?:product|review)/(?<fieldKey>\\w++):(?<fieldValue>.*+)"
+            "(?:product|review)/(?<fieldKey>\\w++): (?<fieldValue>.*+)"
     );
+
+
 
     // Assume each review begins with a `productId`, followed by the rest of the fields we're interested in.
     private final String DELIMITER_FIELD_KEY = "productId";
 
     private final Matcher matcher;
+    private final HashMap<String, String> fields;
     private boolean hasMatch;
 
     public InMemoryReviewParser(CharSequence seq) {
         this.matcher = FIELD_PATTERN.matcher(seq);
+        this.fields = new HashMap<>();
         this.hasMatch = this.matcher.find();
     }
 
@@ -54,7 +58,7 @@ public class InMemoryReviewParser implements Iterator<Review> {
             throw new NoSuchElementException();
         }
 
-        var fields = new HashMap<String, String>();
+        fields.clear();
         do {
             fields.put(matcher.group("fieldKey"), matcher.group("fieldValue"));
             hasMatch = matcher.find();
