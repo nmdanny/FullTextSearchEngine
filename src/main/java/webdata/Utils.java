@@ -5,13 +5,49 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class Utils {
+
+
+    public static <T> int binarySearchLeftmost(List<? extends Comparable<? super T>> list, T target) {
+        int low = 0;
+        int high = list.size();
+        while (low < high) {
+            int mid = (low + high)/2;
+            Comparable<? super T> midCandidate = list.get(mid);
+            if (midCandidate.compareTo(target) < 0) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+        if (low < list.size() && list.get(low).compareTo(target) == 0) {
+            return low;
+        }
+        return -1;
+    }
+
+    public static <T> int binarySearchRightmost(List<? extends Comparable<? super T>> list, T target) {
+        int low = 0;
+        int high = list.size();
+        while (low < high) {
+            int mid = (low + high)/2;
+            Comparable<? super T> midCandidate = list.get(mid);
+            if (midCandidate.compareTo(target) > 0) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        if (low > 0 && list.get(high - 1).compareTo(target) == 0) {
+            return high - 1;
+        }
+        return -1;
+    }
+
 
     public static <T> Stream<T> iteratorToStream(Iterator<T> iterator)
     {
@@ -19,6 +55,22 @@ public class Utils {
                Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED),
                false
        );
+    }
+
+    public static <T> Enumeration<T> streamToEnumeration(Stream<T> stream)
+    {
+        var it = stream.iterator();
+        return new Enumeration<T>() {
+            @Override
+            public boolean hasMoreElements() {
+                return it.hasNext();
+            }
+
+            @Override
+            public T nextElement() {
+                return it.next();
+            }
+        };
     }
 
     /** Similar to `String::lastIndexOf` */

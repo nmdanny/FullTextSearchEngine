@@ -1,8 +1,10 @@
-package webdata;
+package webdata.parsing;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Objects;
 
+/** Represents a parsed review */
 public class Review {
     private String productId;
     private int helpfulnessNumerator;
@@ -11,7 +13,7 @@ public class Review {
     private String text;
 
     public static Review fromFields(HashMap<String, String> fields) {
-        String productId = fields.getOrDefault("productId", "");
+        String productId = fields.getOrDefault("productId", "").toLowerCase();
         String helpfulness = fields.getOrDefault("helpfulness", "0/1");
         String score = fields.getOrDefault("score", "1");
         String text = fields.getOrDefault("text", "");
@@ -45,12 +47,21 @@ public class Review {
             helpfulnessDenominator = temp;
         }
 
+        if (helpfulnessNumerator < 0) {
+            System.err.println("Helpfulness numerator cannot be negative, changing to 0");
+            helpfulnessNumerator = 0;
+        }
+        if (helpfulnessDenominator < 0) {
+            System.err.println("Helpfulness denominator cannot be negative, changing to numerator");
+            helpfulnessDenominator = helpfulnessNumerator;
+        }
+
         int scoreInt;
         try {
             scoreInt = (int)Double.parseDouble(score);
             if (scoreInt < 1 || scoreInt > 5)
             {
-                throw new IllegalArgumentException("Score " + scoreInt + " is not between 1 and 5");
+                throw new NumberFormatException("Score " + scoreInt + " is not between 1 and 5");
             }
         } catch (NumberFormatException ex)
         {
@@ -58,8 +69,12 @@ public class Review {
             scoreInt = 1;
         }
 
+        if (productId.getBytes(StandardCharsets.UTF_8).length != 10) {
+            System.err.format("Found a product ID which cannot be encoded in 10 bytes: %s", productId);
+        }
+
         Review review = new Review();
-        review.productId = productId;
+        review.productId = productId.toLowerCase();
         review.helpfulnessNumerator = helpfulnessNumerator;
         review.helpfulnessDenominator = helpfulnessDenominator;
         review.score = scoreInt;
@@ -67,6 +82,27 @@ public class Review {
 
         return review;
     }
+
+    public String getProductId() {
+        return productId;
+    }
+
+    public int getHelpfulnessNumerator() {
+        return helpfulnessNumerator;
+    }
+
+    public int getHelpfulnessDenominator() {
+        return helpfulnessDenominator;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public String getText() {
+        return text;
+    }
+
 
     @Override
     public String toString() {

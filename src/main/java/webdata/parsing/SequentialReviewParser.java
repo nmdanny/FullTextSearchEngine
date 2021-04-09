@@ -1,6 +1,5 @@
 package webdata.parsing;
 
-import webdata.Review;
 import webdata.Utils;
 
 import java.io.BufferedReader;

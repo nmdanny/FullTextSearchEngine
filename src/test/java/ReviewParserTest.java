@@ -2,7 +2,7 @@ package test;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import webdata.Review;
+import webdata.parsing.Review;
 import webdata.parsing.ParallelReviewParser;
 import webdata.parsing.SequentialReviewParser;
 import webdata.parsing.InMemoryReviewParser;

@@ -1,7 +1,5 @@
 package webdata.parsing;
 
-import webdata.Review;
-
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

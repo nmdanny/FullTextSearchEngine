@@ -1,0 +1,180 @@
+package webdata.storage;
+
+import webdata.Utils;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+/** Stores reviews sorted by product ID, allowing binary search via said ID */
+public class ReviewStorage implements Closeable, Flushable {
+
+    private static final String STORAGE_FILE = "storage.bin";
+
+    // Review buffer used for reading or writing
+    private final ByteBuffer reviewBuf;
+
+    private RandomAccessFile file;
+    private FileChannel channel;
+    private CompactReview lastReview;
+    private int numReviews;
+
+    /** Allows reading and writing compact reviews(without terms) to a binary file */
+    public ReviewStorage(Path path) throws IOException {
+        this.file = new RandomAccessFile(path.toString(), "rw");
+        this.channel = file.getChannel();
+        this.reviewBuf = ByteBuffer.allocate(CompactReview.SIZE_BYTES);
+        this.numReviews = (int)(file.length() / (long)CompactReview.SIZE_BYTES);
+        this.lastReview = null;
+        if (this.numReviews > 0) {
+            this.lastReview = get(this.numReviews);
+        }
+    }
+
+    public static ReviewStorage inDirectory(String dir) throws IOException {
+        return new ReviewStorage(Path.of(dir, STORAGE_FILE));
+    }
+
+    /** Returns the number of reviews in the storage */
+    public int getNumReviews() {
+        return numReviews;
+    }
+
+    public void appendMany(Stream<CompactReview> reviews) throws IOException {
+        channel.position(file.length());
+
+        try ( var stream = new DataOutputStream(new BufferedOutputStream(Channels.newOutputStream(channel))) ) {
+            var it = reviews.iterator();
+            while (it.hasNext()) {
+                var compactReview = it.next();
+
+                if (lastReview != null && compactReview.getProductId().compareTo(lastReview.getProductId()) < 0) {
+                    throw new IllegalArgumentException("Must append reviews in a lexicographically increasing product ID order");
+                }
+                lastReview = compactReview;
+
+                if (numReviews % 1000000 == 0) {
+                    System.out.format("+1mil Finished %d reviews so far\n", numReviews);
+                }
+                if (numReviews % 5000000 == 0) {
+                    System.out.format("+5mil Finished %d reviews so far, flushing\n", numReviews);
+                    stream.flush();
+                    channel.force(true);
+                }
+                compactReview.serialize(stream);
+                ++numReviews;
+            }
+        }
+    }
+
+    /** Appends a review to the file, must use lexicographic ordering. */
+    public void appendReview(CompactReview newReview) throws IOException {
+        if (lastReview != null && newReview.getProductId().compareTo(lastReview.getProductId()) < 0) {
+            throw new IllegalArgumentException("Must append reviews in a lexicographically increasing product ID order");
+        }
+        channel.position(file.length());
+
+        reviewBuf.clear();
+        newReview.serialize(reviewBuf);
+        reviewBuf.flip();
+        int bytesWritten = channel.write(reviewBuf);
+        assert bytesWritten == CompactReview.SIZE_BYTES;
+        if (numReviews + 1 < 0) {
+            throw new IllegalStateException("Tried adding more than the maximal amount of reviews");
+        }
+        ++numReviews;
+    }
+
+
+    /** Loads a compact review from storage file using given document ID */
+    public CompactReview get(int docId) throws IOException {
+        if (docId <= 0) {
+            throw new IllegalArgumentException("docId must be positive");
+        }
+        // docIds begin from 1, hence why we subtract one
+        long filePos = docIdToFilePos(docId);
+        channel.position(filePos);
+        reviewBuf.clear();
+        int bytesRead = channel.read(reviewBuf);
+        reviewBuf.flip();
+        assert bytesRead == CompactReview.SIZE_BYTES;
+        return CompactReview.deserialize(reviewBuf);
+    }
+
+
+    @Override
+    public void close() throws IOException {
+        channel.close();;
+        file.close();
+    }
+
+    @Override
+    public void flush() throws IOException {
+        channel.force(true);
+    }
+
+    private long docIdToFilePos(int docId) {
+        return ((long)docId - 1) * CompactReview.SIZE_BYTES;
+    }
+
+    // Returns a tuple of the lowest and highest document IDs matching given product Id, or an empty array otherwise.
+    public int[] binarySearchRange(String productId) throws IOException {
+        var abstractList = new AbstractList<String>() {
+            @Override
+            public String get(int index) {
+                try {
+                    return ReviewStorage.this.get(index + 1).getProductId();
+                } catch (IOException ex) {
+                    throw new RuntimeException(String.format("Got IO error while getting document of ID %d", index + 1));
+                }
+            }
+
+            @Override
+            public int size() {
+                return numReviews;
+            }
+        };
+
+        /* Now, perform binary search on documents [1, firstDocId-1]
+           The reason for doing a binary search, rather than linearly scanning backwards,
+           is that despite both having the same complexity, if this product has lots of reviews and we happened to
+           land far from the beginning, reading those reviews via random access is slow.
+
+           I would like to utilize buffering, but Java's built in buffered streams only go in the forward direction. Hence
+           why I'd like to quickly find the lowest matching docId by skipping around
+         */
+
+        int lowestMatchingDocId = 1 + Utils.binarySearchLeftmost(abstractList, productId);
+        if (lowestMatchingDocId <= 0) {
+            return new int[]{};
+        }
+        int highestMatchingDocId = 1 + Utils.binarySearchRightmost(abstractList, productId);
+
+        assert highestMatchingDocId >= lowestMatchingDocId;
+        assert get(lowestMatchingDocId).getProductId().equals(productId);
+        assert get(highestMatchingDocId).getProductId().equals(productId);
+        if (lowestMatchingDocId > 1) {
+            assert !get(lowestMatchingDocId - 1).getProductId().equals(productId);
+        }
+        if (highestMatchingDocId + 1 <= numReviews) {
+            assert !get(highestMatchingDocId + 1).getProductId().equals(productId);
+        }
+
+        return new int[] { lowestMatchingDocId, highestMatchingDocId };
+    }
+
+    /** Returns a stream of document IDs for given product */
+    public IntStream getReviewsForProduct(String productId) throws IOException {
+        int[] low_high = binarySearchRange(productId);
+        if (low_high.length == 0) {
+            return IntStream.empty();
+        }
+        return IntStream.rangeClosed(low_high[0], low_high[1]);
+    }
+
+}
