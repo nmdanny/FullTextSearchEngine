@@ -27,6 +27,10 @@ public class InMemoryDictionaryBuilder {
 
     public void processDocument(int docId, CharSequence document) {
         var tokens = Tokenizer.tokenize(document);
+        processDocument(docId, tokens);
+    }
+
+    public void processDocument(int docId, String[] tokens) {
         var tokenToOccurrence = new HashMap<String, TermOccurrence>();
         for (var token: tokens) {
             TermOccurrence occurrence = tokenToOccurrence.get(token);
