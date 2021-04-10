@@ -75,7 +75,7 @@ public class PostingListsTest {
 
         for (var entry: docIds.entrySet()) {
             var pointer = termToPostingPtr.get(entry.getKey());
-            var frequency = entry.getValue().size() * 2;
+            var frequency = entry.getValue().size();
             var numbersIt = reader.readDocIdFreqPairs(pointer, frequency);
             for (var docIdAndFreq: entry.getValue()) {
                 int docId = numbersIt.nextElement();
@@ -83,6 +83,7 @@ public class PostingListsTest {
                 assertEquals(docIdAndFreq[0], docId);
                 assertEquals(docIdAndFreq[1], freq);
             }
+            assertFalse(numbersIt.hasMoreElements());
         }
 
     }

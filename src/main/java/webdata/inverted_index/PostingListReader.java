@@ -50,6 +50,7 @@ public class PostingListReader {
     public Enumeration<Integer> readDocIdFreqPairs(int postingPtr, int frequency) throws IOException {
         assert frequency > 0;
 
+        // TODO: maybe re-use file, need to check if enumeration will be used concurrently
         var raf = new RandomAccessFile(filePath, "r");
         var fileChannel = raf.getChannel();
         fileChannel.position(postingPtr);
@@ -73,7 +74,7 @@ public class PostingListReader {
 
             @Override
             public boolean hasMoreElements() {
-                return nextRead > 0;
+                return nextRead > 0 && numPairsRead < frequency;
             }
 
             @Override
