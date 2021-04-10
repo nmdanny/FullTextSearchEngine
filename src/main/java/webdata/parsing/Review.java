@@ -1,6 +1,7 @@
 package webdata.parsing;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -10,7 +11,7 @@ public class Review {
     private int helpfulnessNumerator;
     private int helpfulnessDenominator;
     private int score;
-    private String text;
+    private String[] tokens;
 
     public static Review fromFields(HashMap<String, String> fields) {
         String productId = fields.getOrDefault("productId", "").toLowerCase();
@@ -78,7 +79,7 @@ public class Review {
         review.helpfulnessNumerator = helpfulnessNumerator;
         review.helpfulnessDenominator = helpfulnessDenominator;
         review.score = scoreInt;
-        review.text = text;
+        review.tokens = Tokenizer.tokenize(text);
 
         return review;
     }
@@ -99,10 +100,24 @@ public class Review {
         return score;
     }
 
-    public String getText() {
-        return text;
+    public String[] getTokens() {
+        return tokens;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Review review = (Review) o;
+        return helpfulnessNumerator == review.helpfulnessNumerator && helpfulnessDenominator == review.helpfulnessDenominator && score == review.score && productId.equals(review.productId) && Arrays.equals(tokens, review.tokens);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(productId, helpfulnessNumerator, helpfulnessDenominator, score);
+        result = 31 * result + Arrays.hashCode(tokens);
+        return result;
+    }
 
     @Override
     public String toString() {
@@ -111,20 +126,7 @@ public class Review {
                 ", helpfulnessNumerator=" + helpfulnessNumerator +
                 ", helpfulnessDenominator=" + helpfulnessDenominator +
                 ", score=" + score +
-                ", text='" + text + '\'' +
+                ", tokens=" + Arrays.toString(tokens) +
                 '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Review review = (Review) o;
-        return helpfulnessNumerator == review.helpfulnessNumerator && helpfulnessDenominator == review.helpfulnessDenominator && score == review.score && productId.equals(review.productId) && text.equals(review.text);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(productId, helpfulnessNumerator, helpfulnessDenominator, score, text);
     }
 }

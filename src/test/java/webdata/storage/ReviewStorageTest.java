@@ -57,6 +57,7 @@ class ReviewStorageTest {
             assertEquals(REVIEWS[i-1].getProductId(), gottenCompact.getProductId());
             assertEquals(REVIEWS[i-1].getHelpfulnessNumerator(), gottenCompact.getHelpfulnessNumerator());
             assertEquals(REVIEWS[i-1].getHelpfulnessDenominator(), gottenCompact.getHelpfulnessDenominator());
+            assertEquals(REVIEWS[i-1].getTokens().length, gottenCompact.getNumTokens());
         }
         assertIterableEquals(expectedCompacts, gottenCompacts);
         
