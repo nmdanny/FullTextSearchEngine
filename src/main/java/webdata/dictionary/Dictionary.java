@@ -1,16 +1,17 @@
 package webdata.dictionary;
 
+import webdata.Utils;
 import webdata.inverted_index.PostingListReader;
 import webdata.inverted_index.PostingListWriter;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
+import java.nio.charset.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.stream.Stream;
 
 /** Contains the in memory dictionary, allowing reading and writing to it, as well as saving and loading to disk */
@@ -18,6 +19,7 @@ public class Dictionary implements Closeable, Flushable {
 
     private final String dir;
     private final Charset encoding;
+    private final CharsetDecoder charsetDecoder;
 
     private final ArrayList<DictionaryElement> elements;
     private static final int BLOCK_SIZE = 4;
@@ -50,6 +52,9 @@ public class Dictionary implements Closeable, Flushable {
     public Dictionary(String dir, Charset encoding, int mmapSize) throws IOException {
         this.dir = dir;
         this.encoding = encoding;
+        this.charsetDecoder = encoding.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPLACE)
+                .onUnmappableCharacter(CodingErrorAction.REPLACE);
 
         this.curTerm = null;
         this.curTermPostingPtr = -1;
@@ -155,9 +160,15 @@ public class Dictionary implements Closeable, Flushable {
         return this.elements.get(index).getTokenFrequency();
     }
 
-    /** Gets a pointer to the postings list of term at given index */
-    int getPostingsPointer(int index) {
-        return this.elements.get(index).getPostingsPointer();
+    /** Returns a sequence of docID & freq pairs of documents containing term at given index. */
+    public Enumeration<Integer> getDocIdsAndFreqs(int index) throws IOException {
+        var element = this.elements.get(index);
+        try {
+            return postingListReader.readDocIdFreqPairs(element.getPostingsPointer(), element.getTokenFrequency());
+        } catch (IOException e) {
+            System.err.println("Couldn't get docIDs of postings for review at index " + index + ": " + e);
+            return Utils.streamToEnumeration(Stream.empty());
+        }
     }
 
     /** Begins a new term */
@@ -207,18 +218,42 @@ public class Dictionary implements Closeable, Flushable {
 
     }
 
-    public void addTerm(int docId, String[] reviewTerms) throws IOException {
-        String term = postingListWriter.getCurrentTerm();
-        long freqInDoc = Arrays.stream(reviewTerms)
-                              .filter(someTerm -> someTerm.equals(term))
-                              .count();
-        addTermOccurence(docId, (int)freqInDoc);
-
-    }
-
     public void addTermOccurence(int docId, int freqInDoc) throws IOException {
         totalNumberOfTokens += freqInDoc;
         postingListWriter.add(docId, freqInDoc);
+    }
+
+
+    /** Allows treating the dictionary as a list of byte buffers(term encodings),
+     *  allowing to perform binary search over them
+     */
+    private final AbstractList<String> abstractList = new AbstractList<>() {
+        @Override
+        public int size() {
+            return elements.size();
+        }
+
+        @Override
+        public String get(int index) {
+            try {
+                return charsetDecoder.decode(getTerm(index)).toString();
+            } catch (CharacterCodingException e) {
+               throw new RuntimeException("Impossible: charset decoding failed");
+            }
+        }
+    };
+
+    /** Performs binary search over the dictionary in order to determine its index within the dictionary,
+     * @param token Token
+     * @return Index of token within dictionary, or -1 if it wasn't found
+     */
+    public int getIndexOfToken(String token) {
+        return Collections.binarySearch(abstractList, token);
+    }
+
+    /** Returns the encoding used by this dictionary. */
+    public Charset getEncoding() {
+        return encoding;
     }
 
     /** Returns a stream over all dictionary elements */
