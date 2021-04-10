@@ -61,5 +61,6 @@ public class InMemoryDictionaryBuilder {
             dictionary.addTermOccurence(occurence.docId, occurence.freqInDoc);
         }
         dictionary.endTerm();
+        dictionary.flush();
     }
 }
