@@ -30,7 +30,6 @@ class ReviewParserTest {
     @Test
     void canParseDataset() throws IOException {
         var ds = fileToReviewStream("datasets\\1000.txt", 1024 * 10, 32)
-                .peek(System.out::println)
                 .collect(Collectors.toList());
 
             var raw = Files.readString(Path.of("datasets", "1000.txt"), DATASET_ENCODING);
