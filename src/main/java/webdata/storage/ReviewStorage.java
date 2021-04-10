@@ -16,24 +16,22 @@ public class ReviewStorage implements Closeable, Flushable {
 
     private static final String STORAGE_FILE = "storage.bin";
 
-    // Review buffer used for reading or writing
+    private final String path;
+
+    // Review buffer used for reading
     private final ByteBuffer reviewBuf;
 
-    private RandomAccessFile file;
-    private FileChannel channel;
-    private CompactReview lastReview;
+    private final RandomAccessFile file;
+    private final FileChannel channel;
     private int numReviews;
 
     /** Allows reading and writing compact reviews(without terms) to a binary file */
     public ReviewStorage(Path path) throws IOException {
-        this.file = new RandomAccessFile(path.toString(), "rw");
+        this.path = path.toString();
+        this.file = new RandomAccessFile(this.path, "rw");
         this.channel = file.getChannel();
         this.reviewBuf = ByteBuffer.allocate(CompactReview.SIZE_BYTES);
         this.numReviews = (int)(file.length() / (long)CompactReview.SIZE_BYTES);
-        this.lastReview = null;
-        if (this.numReviews > 0) {
-            this.lastReview = get(this.numReviews);
-        }
     }
 
     public static ReviewStorage inDirectory(String dir) throws IOException {
@@ -45,11 +43,15 @@ public class ReviewStorage implements Closeable, Flushable {
         return numReviews;
     }
 
+    /** Appends a stream of reviews(lexicographically sorted by product IDs) into the storage */
     public void appendMany(Stream<CompactReview> reviews) throws IOException {
         channel.position(file.length());
 
-        try ( var stream = new DataOutputStream(new BufferedOutputStream(Channels.newOutputStream(channel))) ) {
+        try (   var bulkAppendFile = new RandomAccessFile(this.path, "rw");
+                var bulkAppendChannel = bulkAppendFile.getChannel();
+                var stream = new DataOutputStream(new BufferedOutputStream(Channels.newOutputStream(bulkAppendChannel))) ) {
             var it = reviews.iterator();
+            CompactReview lastReview = null;
             while (it.hasNext()) {
                 var compactReview = it.next();
 
@@ -72,23 +74,6 @@ public class ReviewStorage implements Closeable, Flushable {
         }
     }
 
-    /** Appends a review to the file, must use lexicographic ordering. */
-    public void appendReview(CompactReview newReview) throws IOException {
-        if (lastReview != null && newReview.getProductId().compareTo(lastReview.getProductId()) < 0) {
-            throw new IllegalArgumentException("Must append reviews in a lexicographically increasing product ID order");
-        }
-        channel.position(file.length());
-
-        reviewBuf.clear();
-        newReview.serialize(reviewBuf);
-        reviewBuf.flip();
-        int bytesWritten = channel.write(reviewBuf);
-        assert bytesWritten == CompactReview.SIZE_BYTES;
-        if (numReviews + 1 < 0) {
-            throw new IllegalStateException("Tried adding more than the maximal amount of reviews");
-        }
-        ++numReviews;
-    }
 
 
     /** Loads a compact review from storage file using given document ID */

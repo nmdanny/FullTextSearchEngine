@@ -34,9 +34,7 @@ class ReviewStorageTest {
         path.toFile().deleteOnExit();
         var storage = new ReviewStorage(path);
 
-        for (var review: REVIEWS) {
-            storage.appendReview(new CompactReview(review));
-        }
+        storage.appendMany(Arrays.stream(REVIEWS).map(CompactReview::new));
 
         storage.flush();
         assertEquals(storage.getNumReviews(), REVIEWS.length);
@@ -67,25 +65,23 @@ class ReviewStorageTest {
     @Test
     void canBinarySearch() throws IOException {
         var path = Files.createTempFile("canBinarySearch", ".bin");
-        var storage = new ReviewStorage(path);
+        try(var storage = new ReviewStorage(path)) {
+            storage.appendMany(Arrays.stream(REVIEWS).map(CompactReview::new));
 
-        storage.appendMany(Arrays.stream(REVIEWS).map(CompactReview::new));
+            for (int docId = 1; docId <= REVIEWS.length; ++docId) {
+                var expectedReview = new CompactReview(REVIEWS[docId - 1]);
+                var gottenReviewRange = storage.binarySearchRange(expectedReview.getProductId());
+                assertEquals(2, gottenReviewRange.length);
+                assertNotEquals(-1, gottenReviewRange[0]);
+                assertNotEquals(-1, gottenReviewRange[1]);
+                var lowestReview = storage.get(gottenReviewRange[0]);
+                var highestReview = storage.get(gottenReviewRange[1]);
+                assertEquals(expectedReview.getProductId(), lowestReview.getProductId());
+                assertEquals(expectedReview.getProductId(), highestReview.getProductId());
+            }
 
-        storage.flush();
 
-        for (int docId = 1; docId <= REVIEWS.length; ++docId) {
-            var expectedReview = new CompactReview(REVIEWS[docId-1]);
-            var gottenReviewRange = storage.binarySearchRange(expectedReview.getProductId());
-            assertEquals(2, gottenReviewRange.length);
-            assertNotEquals(-1, gottenReviewRange[0]);
-            assertNotEquals(-1, gottenReviewRange[1]);
-            var lowestReview = storage.get(gottenReviewRange[0]);
-            var highestReview = storage.get(gottenReviewRange[1]);
-            assertEquals(expectedReview.getProductId(), lowestReview.getProductId());
-            assertEquals(expectedReview.getProductId(), highestReview.getProductId());
+            assertEquals(0, storage.binarySearchRange("1234567890").length);
         }
-
-
-        assertEquals(0, storage.binarySearchRange("1234567890").length);
     }
 }
