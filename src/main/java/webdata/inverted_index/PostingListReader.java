@@ -12,18 +12,8 @@ public class PostingListReader {
 
     private final String filePath;
 
-    private int lastDocId;
-    private String curTerm;
-    private int curDocumentFrequency;
-    private int curPostingPtr;
-
     public PostingListReader(String path) throws IOException {
         this.filePath = path;
-
-        this.lastDocId = 0;
-        this.curTerm = null;
-        this.curDocumentFrequency = 0;
-        this.curPostingPtr = 0;
     }
 
     /** Returns the posting list at given pointer as a stream of integers, without caring about what they convey,
