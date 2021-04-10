@@ -35,8 +35,9 @@ class TermsManagerTest {
         }).collect(Collectors.toList());
 
         for (int i=0; i < allocations.size(); ++i) {
-            var charBuf = manager.derefTerm(allocations.get(i));
-            assertEquals(strings[i], charBuf.toString());
+            var alloc = allocations.get(i);
+            var byteBuf = manager.derefTermBytes(alloc.position, alloc.length);
+            assertEquals(StandardCharsets.UTF_8.encode(strings[i]), byteBuf);
         }
 
     }

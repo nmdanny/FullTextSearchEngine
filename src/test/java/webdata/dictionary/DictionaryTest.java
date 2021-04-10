@@ -15,8 +15,9 @@ public class DictionaryTest {
     @Test
     void canCreateSmallDictionary() throws IOException {
 
+        var charset = StandardCharsets.UTF_8;
         var dictFolder = Files.createTempDirectory("canCreateSmallDictionary");
-        var dict = new Dictionary(dictFolder.toString(), StandardCharsets.UTF_8, 1024);
+        var dict = new Dictionary(dictFolder.toString(), charset, 1024);
 
         assertEquals(0, dict.stream().count());
 
@@ -31,7 +32,7 @@ public class DictionaryTest {
         dict.close();
 
         // load dictionary from disk
-        dict = new Dictionary(dictFolder.toString(), StandardCharsets.UTF_8, 1024);
+        dict = new Dictionary(dictFolder.toString(), charset, 1024);
 
         // ensure statistics work
         assertEquals(10, dict.getUniqueNumberOfTokens());
@@ -54,7 +55,7 @@ public class DictionaryTest {
         };
         for (int i=0; i < expectedElements.length; ++i) {
             Object[] expectedElement = expectedElements[i];
-            assertEquals(expectedElement[0], dict.getTerm(i).toString());
+            assertEquals(expectedElement[0], charset.decode(dict.getTerm(i)).toString());
             assertEquals(expectedElement[1], dict.getTokenFrequency(i));
         }
 
@@ -63,7 +64,7 @@ public class DictionaryTest {
                 .map(arr -> (String)arr[0]).sorted().collect(Collectors.toList());
         Dictionary finalDict = dict;
         var gottenOrdering = IntStream.range(0, dict.getUniqueNumberOfTokens())
-                .mapToObj(ix -> finalDict.getTerm(ix).toString()).collect(Collectors.toList());
+                .mapToObj(ix -> charset.decode(finalDict.getTerm(ix)).toString()).collect(Collectors.toList());
 
         assertIterableEquals(orderedElements, gottenOrdering);
 

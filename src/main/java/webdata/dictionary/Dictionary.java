@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 public class Dictionary implements Closeable, Flushable {
 
     private final String dir;
+    private final Charset encoding;
 
     private final ArrayList<DictionaryElement> elements;
     private static final int BLOCK_SIZE = 4;
@@ -48,6 +49,7 @@ public class Dictionary implements Closeable, Flushable {
      */
     public Dictionary(String dir, Charset encoding, int mmapSize) throws IOException {
         this.dir = dir;
+        this.encoding = encoding;
 
         this.curTerm = null;
         this.curTermPostingPtr = -1;
@@ -128,16 +130,11 @@ public class Dictionary implements Closeable, Flushable {
         is.close();
     }
 
-    /** Given a term pointer and length(in bytes), returns the term. */
-    public CharBuffer derefTermPointer(int termPointer, int termLength) {
-        return this.termsManager.derefTerm(termPointer, termLength);
-    }
-
     /** Returns the term of this element, assuming its index is known */
-    CharBuffer getTerm(int index) {
+    ByteBuffer getTerm(int index) {
         if (index % BLOCK_SIZE == 0) {
             var element = ((FirstBlockElement)this.elements.get(index));
-            return derefTermPointer(element.termPointer, element.termLength);
+            return termsManager.derefTermBytes(element.termPointer, element.termLength);
         } else {
             int firstBlockIndex = index - index % BLOCK_SIZE;
             var firstBlockElement = ((FirstBlockElement)this.elements.get(firstBlockIndex));
@@ -148,7 +145,7 @@ public class Dictionary implements Closeable, Flushable {
             }
 
             var selectedBlockElement = ((OtherBlockElement)this.elements.get(index));
-            return derefTermPointer(termPointer, selectedBlockElement.termLength);
+            return termsManager.derefTermBytes(termPointer, selectedBlockElement.termLength);
         }
     }
 
