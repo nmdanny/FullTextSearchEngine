@@ -9,42 +9,14 @@ import java.nio.CharBuffer;
  * Represents a block element which isn't the first
  */
 class OtherBlockElement implements DictionaryElement {
-    Dictionary dictionary;
-    DictionaryBlock dictionaryBlock;
-    int indexWithinBlock;
+    final int frequency;
+    final int postingPtr;
+    final int termLength;
 
-    int frequency;
-    int postingPtr;
-    int termLength;
-
-    public OtherBlockElement(Dictionary dictionary, DictionaryBlock dictionaryBlock, int indexWithinBlock,
-                             int frequency, int postingPtr, int termLength) {
-        this.dictionary = dictionary;
-        this.dictionaryBlock = dictionaryBlock;
-        this.indexWithinBlock = indexWithinBlock;
+    public OtherBlockElement(int frequency, int postingPtr, int termLength) {
         this.frequency = frequency;
         this.postingPtr = postingPtr;
         this.termLength = termLength;
-    }
-
-    public static OtherBlockElement NullElement(Dictionary dictionary, DictionaryBlock dictionaryBlock, int indexWithinBlock) {
-        return new OtherBlockElement(dictionary, dictionaryBlock, indexWithinBlock, -1, -1, -1);
-    }
-
-    @Override
-    public void setDictionary(Dictionary dictionary) {
-        this.dictionary = dictionary;
-    }
-
-
-    @Override
-    public CharBuffer getTerm() {
-        var firstBlockElement = dictionaryBlock.firstBlockElement;
-        int termPointer = firstBlockElement.getTermPointer() + firstBlockElement.termLength;
-        for (int i=1; i < indexWithinBlock; ++i) {
-            termPointer += dictionaryBlock.otherBlockElements[i-1].termLength;
-        }
-        return dictionary.derefTermPointer(termPointer, termLength);
     }
 
     @Override
@@ -63,11 +35,10 @@ class OtherBlockElement implements DictionaryElement {
         out.writeInt(termLength);
     }
 
-    public static OtherBlockElement deserialize(DataInputStream in, Dictionary dictionary,
-                                                DictionaryBlock dictionaryBlock, int indexWithinBlock) throws IOException {
+    public static OtherBlockElement deserialize(DataInputStream in) throws IOException {
         int frequency = in.readInt();
         int postingPtr = in.readInt();
-        int termLength= in.readInt();
-        return new OtherBlockElement(dictionary, dictionaryBlock, indexWithinBlock, frequency, postingPtr, termLength);
+        int termLength = in.readInt();
+        return new OtherBlockElement(frequency, postingPtr, termLength);
     }
 }

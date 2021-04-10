@@ -6,11 +6,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DictionaryTest {
     @Test
@@ -28,7 +27,13 @@ public class DictionaryTest {
 
         dictionaryBuilder.finish();
 
+        // save dictionary to disk
+        dict.close();
 
+        // load dictionary from disk
+        dict = new Dictionary(dictFolder.toString(), StandardCharsets.UTF_8, 1024);
+
+        // ensure statistics work
         assertEquals(10, dict.getUniqueNumberOfTokens());
         assertEquals(18, dict.getTotalNumberOfTokens());
 
@@ -49,14 +54,19 @@ public class DictionaryTest {
         };
         for (int i=0; i < expectedElements.length; ++i) {
             Object[] expectedElement = expectedElements[i];
-            DictionaryElement gottenElement = elements.get(i);
-            assertEquals(expectedElement[0], gottenElement.getTerm().toString());
-            assertEquals(expectedElement[1], gottenElement.getTokenFrequency());
-
-
+            assertEquals(expectedElement[0], dict.getTerm(i).toString());
+            assertEquals(expectedElement[1], dict.getTokenFrequency(i));
         }
 
-        dict.flush();
+        // ensure terms are in proper order
+        var orderedElements = Arrays.stream(expectedElements)
+                .map(arr -> (String)arr[0]).sorted().collect(Collectors.toList());
+        Dictionary finalDict = dict;
+        var gottenOrdering = IntStream.range(0, dict.getUniqueNumberOfTokens())
+                .mapToObj(ix -> finalDict.getTerm(ix).toString()).collect(Collectors.toList());
+
+        assertIterableEquals(orderedElements, gottenOrdering);
+
         dict.close();
 
     }
