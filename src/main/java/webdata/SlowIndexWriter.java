@@ -1,7 +1,11 @@
 package webdata;
 
 import webdata.dictionary.Dictionary;
+import webdata.dictionary.InMemoryDictionaryBuilder;
 import webdata.parsing.ParallelReviewParser;
+import webdata.parsing.Review;
+import webdata.storage.CompactReview;
+import webdata.storage.ReviewStorage;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -21,16 +25,34 @@ public class SlowIndexWriter {
 	*/
 	public void slowWrite(String inputFile, String dir) {
 		try {
-		    var dict = new Dictionary(dir, StandardCharsets.ISO_8859_1, Integer.MAX_VALUE);
-		    int bufSize = 1 << 16;
-		    int numBufs = 4;
-			Charset encoding = StandardCharsets.ISO_8859_1;
-		    var parser = new ParallelReviewParser(bufSize, numBufs, encoding);
+			removeIndex(dir);
+			Files.createDirectories(Path.of(dir));
 
-		    parser.parse(inputFile)
-					.forEachOrdered(review -> {
+			int mmapSize = (int)Long.min(Integer.MAX_VALUE, Files.size(Path.of(inputFile)));
+			Charset charset = StandardCharsets.ISO_8859_1;
 
-					});
+
+			try (var dict = new Dictionary(dir, charset, mmapSize);
+			     var storage = ReviewStorage.inDirectory(dir))
+			{
+				var dictBuilder = new InMemoryDictionaryBuilder(dict);
+				int bufSize = 1 << 16;
+				int numBufs = 4;
+				var parser = new ParallelReviewParser(bufSize, numBufs, charset);
+
+				final int[] docId = {1};
+				storage.appendMany(parser.parse(inputFile)
+						.sorted(Comparator.comparing(Review::getProductId))
+						.sequential()
+						.peek(review -> {
+							dictBuilder.processDocument(docId[0], review.getTokens());
+							docId[0] += 1;
+						})
+						.map(CompactReview::new));
+
+				dictBuilder.finish();
+			}
+
 
 		} catch (IOException ex) {
 			System.err.println("IO exception while creating dictionary: " + ex);
@@ -43,19 +65,22 @@ public class SlowIndexWriter {
 	public void removeIndex(String dir) {
 	    try {
 	        var dirPath = Paths.get(dir);
+	        if (!Files.exists(dirPath)) {
+	        	return;
+			}
 			var deletedAllFiles = Files.walk(dirPath)
 					.sorted(Comparator.reverseOrder())
 					.map(Path::toFile)
 					.reduce(true, (deleted, file) -> deleted && file.delete(), Boolean::logicalAnd);
 
 			if (!deletedAllFiles) {
-				throw new IOException("Couldn't delete all files within directory");
+				System.err.println("Couldn't delete all files within directory\n");
 			}
 			if (!Files.deleteIfExists(Paths.get(dir))) {
-				throw new IOException("Deleted all files within directory, but couldn't delete directory.");
+				System.err.println("Deleted all files within directory, but couldn't delete directory.\n");
 			}
 		} catch (IOException ex) {
-			System.err.format("Couldn't delete index at %s: %s", dir, ex.toString());
+			System.err.format("Got exception while trying to delete index at %s: %s\n", dir, ex.toString());
 		}
 	}
 }

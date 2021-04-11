@@ -1,14 +1,30 @@
 package webdata;
 
+import webdata.dictionary.Dictionary;
+import webdata.storage.ReviewStorage;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
+import java.util.stream.Stream;
 
 public class IndexReader {
+
+	private static final Charset CHARSET = StandardCharsets.ISO_8859_1;
+	private final Dictionary dictionary;
+	private final ReviewStorage storage;
 
 	/**
 	* Creates an IndexReader which will read from the given directory
 	*/
 	public IndexReader(String dir) {
-		throw new UnsupportedOperationException("TODO IndexReader");
+		try {
+			dictionary = new Dictionary(dir, CHARSET, 8192);
+			storage = ReviewStorage.inDirectory(dir);
+		} catch (IOException ex) {
+			throw new RuntimeException("Couldn't create dictionary: " + ex);
+		}
 	}
 	
 	/**
@@ -16,7 +32,14 @@ public class IndexReader {
 	* Returns null if there is no review with the given identifier
 	*/
 	public String getProductId(int reviewId) {
-		throw new UnsupportedOperationException("TODO getProductId");
+		try {
+			if (reviewId < 1 || reviewId > storage.getNumReviews()) {
+				return null;
+			}
+			return storage.get(reviewId).getProductId();
+		} catch (IOException e) {
+			throw new RuntimeException("Couldn't get product ID for " + reviewId + ": " + e);
+		}
 	}
 
 	/**
@@ -24,7 +47,14 @@ public class IndexReader {
 	* Returns -1 if there is no review with the given identifier
 	*/
 	public int getReviewScore(int reviewId) {
-		throw new UnsupportedOperationException("TODO getReviewScore");
+		try {
+			if (reviewId < 1 || reviewId > storage.getNumReviews()) {
+				return -1;
+			}
+			return storage.get(reviewId).getScore();
+		} catch (IOException e) {
+			throw new RuntimeException("Couldn't get review score for " + reviewId + ": " + e);
+		}
 	}
 
 	/**
@@ -32,7 +62,14 @@ public class IndexReader {
 	* Returns -1 if there is no review with the given identifier
 	*/
 	public int getReviewHelpfulnessNumerator(int reviewId) {
-		throw new UnsupportedOperationException("TODO getReviewHelpfulnessNumerator");
+		try {
+			if (reviewId < 1 || reviewId > storage.getNumReviews()) {
+				return -1;
+			}
+			return storage.get(reviewId).getHelpfulnessNumerator();
+		} catch (IOException e) {
+			throw new RuntimeException("Couldn't get helpfulness numerator for " + reviewId + ": " + e);
+		}
 	}
 
 	/**
@@ -40,7 +77,14 @@ public class IndexReader {
 	* Returns -1 if there is no review with the given identifier
 	*/
 	public int getReviewHelpfulnessDenominator(int reviewId) {
-		throw new UnsupportedOperationException("TODO getReviewHelpfulnessDenominator");
+		try {
+			if (reviewId < 1 || reviewId > storage.getNumReviews()) {
+				return -1;
+			}
+			return storage.get(reviewId).getHelpfulnessDenominator();
+		} catch (IOException e) {
+			throw new RuntimeException("Couldn't get helpfulness denominator for " + reviewId + ": " + e);
+		}
 	}
 
 	/**
@@ -48,7 +92,15 @@ public class IndexReader {
 	* Returns -1 if there is no review with the given identifier
 	*/
 	public int getReviewLength(int reviewId) {
-		throw new UnsupportedOperationException("TODO getReviewHelpfulnessDenominator");
+
+		try {
+			if (reviewId < 1 || reviewId > storage.getNumReviews()) {
+				return -1;
+			}
+			return storage.get(reviewId).getNumTokens();
+		} catch (IOException e) {
+			throw new RuntimeException("Couldn't get review length for " + reviewId + ": " + e);
+		}
 	}
 
 	/**
@@ -56,7 +108,11 @@ public class IndexReader {
 	* Returns 0 if there are no reviews containing this token
 	*/
 	public int getTokenFrequency(String token) {
-		throw new UnsupportedOperationException("TODO getTokenFrequency");
+		int dictIndex = dictionary.getIndexOfToken(token);
+		if (dictIndex < 0) {
+			return 0;
+		}
+		return dictionary.getTokenFrequency(dictIndex);
 	}
 
 	/**
@@ -65,7 +121,13 @@ public class IndexReader {
 	* Returns 0 if there are no reviews containing this token
 	*/
 	public int getTokenCollectionFrequency(String token) {
-		throw new UnsupportedOperationException("TODO getTokenCollectionFrequency");
+		int sum = 0;
+		var it = getReviewsWithToken(token);
+		while (it.hasMoreElements()) {
+			int _gap = it.nextElement();
+			sum += it.nextElement();
+		}
+		return sum;
 	}
 
 	/**
@@ -78,14 +140,24 @@ public class IndexReader {
 	* Returns an empty Enumeration if there are no reviews containing this token
 	*/
 	public Enumeration<Integer> getReviewsWithToken(String token) {
-		throw new UnsupportedOperationException("getReviewsWithToken");
+		int dictIndex = dictionary.getIndexOfToken(token);
+		if (dictIndex < 0) {
+			return Utils.streamToEnumeration(Stream.empty());
+		}
+		try {
+			return dictionary.getDocIdsAndFreqs(dictIndex);
+		} catch (IOException e) {
+			System.err.format("Got IO exception while trying to get reviews with token %s: %s",
+					token, e);
+			return Utils.streamToEnumeration(Stream.empty());
+		}
 	}
 
 	/**
 	* Return the number of product reviews available in the system
 	*/
 	public int getNumberOfReviews() {
-		throw new UnsupportedOperationException("TODO getNumberOfReviews");
+		return storage.getNumReviews();
 	}
 
 	/**
@@ -93,7 +165,7 @@ public class IndexReader {
 	* (Tokens should be counted as many times as they appear)
 	*/
 	public int getTokenSizeOfReviews() {
-		throw new UnsupportedOperationException("TODO getTokenSizeOfReviews");
+		return dictionary.getTotalNumberOfTokens();
 	}
 	
 	/**
@@ -103,6 +175,16 @@ public class IndexReader {
 	* Returns an empty Enumeration if there are no reviews for this product
 	*/
 	public Enumeration<Integer> getProductReviews(String productId) {
-		throw new UnsupportedOperationException("TODO getProductReviews");
+	    int dictIndex = dictionary.getIndexOfToken(productId);
+	    if (dictIndex < 0) {
+	    	return Utils.streamToEnumeration(Stream.empty());
+		}
+		try {
+			return dictionary.getDocIdsAndFreqs(dictIndex);
+		} catch (IOException e) {
+			System.err.format("Got IO exception while trying to get doc IDs for product %s: %s",
+					 		  dictIndex, e);
+			return Utils.streamToEnumeration(Stream.empty());
+		}
 	}
 }
