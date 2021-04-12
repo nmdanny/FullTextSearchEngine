@@ -61,6 +61,5 @@ public class InMemoryDictionaryBuilder {
         }
         dictionaryBuilder.endTerm();
         dictionaryBuilder.flush();
-        dictionaryBuilder.close();
     }
 }

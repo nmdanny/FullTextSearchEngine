@@ -20,10 +20,10 @@ public class IndexReader {
 	*/
 	public IndexReader(String dir) {
 		try {
-			dictionary = new Dictionary(dir, CHARSET, 8192);
+			dictionary = new Dictionary(dir, CHARSET, 1024 * 1024 * 50);
 			storage = ReviewStorage.inDirectory(dir);
 		} catch (IOException ex) {
-			throw new RuntimeException("Couldn't create dictionary: " + ex);
+			throw new RuntimeException("Couldn't read dictionary", ex);
 		}
 	}
 	
@@ -175,12 +175,12 @@ public class IndexReader {
 	* Returns an empty Enumeration if there are no reviews for this product
 	*/
 	public Enumeration<Integer> getProductReviews(String productId) {
-	    int dictIndex = dictionary.getIndexOfToken(productId);
+	    int dictIndex = dictionary.getIndexOfToken(productId.toLowerCase());
 	    if (dictIndex < 0) {
 	    	return Utils.streamToEnumeration(Stream.empty());
 		}
 		try {
-			return dictionary.getDocIdsAndFreqs(dictIndex);
+		    return Utils.streamToEnumeration(storage.getReviewsForProduct(productId).boxed());
 		} catch (IOException e) {
 			System.err.format("Got IO exception while trying to get doc IDs for product %s: %s",
 					 		  dictIndex, e);
