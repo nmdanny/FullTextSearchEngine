@@ -7,6 +7,10 @@ import java.util.Objects;
 
 /** Represents a parsed review */
 public class Review {
+    // A document ID is set when iterating over parsed documents(as parsing might happen in parallel)
+    // and must be over 0
+    private int docId = 0;
+
     private String productId;
     private int helpfulnessNumerator;
     private int helpfulnessDenominator;
@@ -75,6 +79,7 @@ public class Review {
         }
 
         Review review = new Review();
+        review.docId = 0;
         review.productId = productId.toLowerCase();
         review.helpfulnessNumerator = helpfulnessNumerator;
         review.helpfulnessDenominator = helpfulnessDenominator;
@@ -82,6 +87,20 @@ public class Review {
         review.tokens = Tokenizer.tokenize(text);
 
         return review;
+    }
+
+    public int getDocId() {
+        if (docId < 1) {
+            throw new IllegalStateException("DocID hasn't been assigned yet");
+        }
+        return this.docId;
+    }
+
+    public void assignDocId(int docId) {
+        if (this.docId >= 1) {
+            throw new IllegalStateException("Can only set document ID once");
+        }
+        this.docId = docId;
     }
 
     public String getProductId() {
