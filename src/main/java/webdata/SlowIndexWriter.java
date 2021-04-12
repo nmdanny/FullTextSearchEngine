@@ -1,7 +1,7 @@
 package webdata;
 
-import webdata.dictionary.Dictionary;
 import webdata.dictionary.InMemoryDictionaryBuilder;
+import webdata.dictionary.SequentialDictionaryBuilder;
 import webdata.parsing.ParallelReviewParser;
 import webdata.parsing.Review;
 import webdata.storage.CompactReview;
@@ -32,10 +32,10 @@ public class SlowIndexWriter {
 			Charset charset = StandardCharsets.ISO_8859_1;
 
 
-			try (var dict = new Dictionary(dir, charset, mmapSize);
-			     var storage = ReviewStorage.inDirectory(dir))
+			try (var seqDictBuilder = new SequentialDictionaryBuilder(dir, charset, mmapSize);
+				 var storage = ReviewStorage.inDirectory(dir))
 			{
-				var dictBuilder = new InMemoryDictionaryBuilder(dict);
+				var dictBuilder = new InMemoryDictionaryBuilder(seqDictBuilder);
 				int bufSize = 1 << 16;
 				int numBufs = 4;
 				var parser = new ParallelReviewParser(bufSize, numBufs, charset);

@@ -3,6 +3,7 @@ package webdata.dictionary;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 
 /**
@@ -13,6 +14,8 @@ class FirstBlockElement implements DictionaryElement {
     final int postingPtr;
     final int termLength;
     final int termPointer;
+
+    static final int SIZE_BYTES = 4 * 4;
 
     public FirstBlockElement(int frequency, int postingPtr, int termLength, int termPointer) {
         this.frequency = frequency;

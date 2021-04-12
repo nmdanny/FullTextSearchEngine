@@ -29,37 +29,29 @@ public class DictionaryTest {
     void setupDictionary() throws IOException {
         charset = StandardCharsets.UTF_8;
         tempDir = Files.createTempDirectory("canCreateSmallDictionary");
-        dict = new Dictionary(tempDir.toString(), charset, 1024);
+        var seqDictBuilder = new SequentialDictionaryBuilder(tempDir.toString(), charset, 1024);
 
-        assertEquals(0, dict.stream().count());
-        assertEquals(0, dict.getUniqueNumberOfTokens());
-        assertEquals(0, dict.getTotalNumberOfTokens());
-
-        var dictionaryBuilder = new InMemoryDictionaryBuilder(dict);
+        var dictionaryBuilder = new InMemoryDictionaryBuilder(seqDictBuilder);
         dictionaryBuilder.processDocument(1, "שרה שרה שיר שמח שיר שמח שרה שרה test");
         dictionaryBuilder.processDocument(2, "גנן גידל דגן בגן, דגן גדול גדל בגן test");
         dictionaryBuilder.finish();
 
+        dict = new Dictionary(tempDir.toString(), charset, 1024);
+
         termAndDocumentFreq = new Object[][] {
 
-                {"test", 2},
+                {"test", 2}, // FBE
                 {"בגן", 1},
                 {"גדול", 1},
                 {"גדל", 1},
-                {"גידל", 1},
+                {"גידל", 1}, // FBE
                 {"גנן", 1},
                 {"דגן", 1},
                 {"שיר", 1},
-                {"שמח", 1},
+                {"שמח", 1}, // FBE, err
                 {"שרה", 1},
         };
     }
-
-    @AfterEach
-    void tearDown() throws IOException {
-        dict.close();
-    }
-
 
     @Test
     void canGetStatistics() {

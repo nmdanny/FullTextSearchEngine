@@ -4,7 +4,6 @@ import webdata.parsing.Tokenizer;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 
@@ -18,11 +17,11 @@ class TermOccurrence {
  *  until we actually fill the dictionary. */
 public class InMemoryDictionaryBuilder {
     private final ArrayList<TermOccurrence> occurrences;
-    private final Dictionary dictionary;
+    private final SequentialDictionaryBuilder dictionaryBuilder;
 
-    public InMemoryDictionaryBuilder(Dictionary dictionary) {
+    public InMemoryDictionaryBuilder(SequentialDictionaryBuilder dictionaryBuilder) {
         this.occurrences = new ArrayList<>();
-        this.dictionary = dictionary;
+        this.dictionaryBuilder = dictionaryBuilder;
     }
 
     public void processDocument(int docId, CharSequence document) {
@@ -56,11 +55,12 @@ public class InMemoryDictionaryBuilder {
         for (var occurence: occurrences) {
             if (!occurence.term.equals(curTerm)) {
                 curTerm = occurence.term;
-                dictionary.beginTerm(occurence.term);
+                dictionaryBuilder.beginTerm(occurence.term);
             }
-            dictionary.addTermOccurence(occurence.docId, occurence.freqInDoc);
+            dictionaryBuilder.addTermOccurence(occurence.docId, occurence.freqInDoc);
         }
-        dictionary.endTerm();
-        dictionary.flush();
+        dictionaryBuilder.endTerm();
+        dictionaryBuilder.flush();
+        dictionaryBuilder.close();
     }
 }

@@ -13,6 +13,8 @@ class OtherBlockElement implements DictionaryElement {
     final int postingPtr;
     final int termLength;
 
+    static final int SIZE_BYTES = 4 * 3;
+
     public OtherBlockElement(int frequency, int postingPtr, int termLength) {
         this.frequency = frequency;
         this.postingPtr = postingPtr;
