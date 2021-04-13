@@ -54,7 +54,7 @@ public class PostingListsTest {
 
         var file = Files.createTempFile("postingListTests", String.format("%d", docIds.hashCode()));
 
-        var fileOs = new FileOutputStream(file.toString());
+        var fileOs = new FileOutputStream(file.toString(), false);
         var bufOs = new BufferedOutputStream(fileOs);
 
         var writer = new PostingListWriter(bufOs);

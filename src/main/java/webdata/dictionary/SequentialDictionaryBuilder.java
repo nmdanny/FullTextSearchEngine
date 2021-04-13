@@ -32,10 +32,10 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable {
         this.uniqueNumberOfTokens = 0;
 
 
-        var elementsFos = new FileOutputStream(Paths.get(dir, Dictionary.DICTIONARY_FILE_NAME).toString());
+        var elementsFos = new FileOutputStream(Paths.get(dir, Dictionary.DICTIONARY_FILE_NAME).toString(), false);
         this.elementsDos = new DataOutputStream(new BufferedOutputStream(elementsFos));
 
-        var postingsFos = new FileOutputStream(Paths.get(dir, Dictionary.POSTINGS_FILE_NAME).toString());
+        var postingsFos = new FileOutputStream(Paths.get(dir, Dictionary.POSTINGS_FILE_NAME).toString(), false);
         var postingsOs = new BufferedOutputStream(postingsFos);
         this.postingListWriter = new PostingListWriter(postingsOs);
         this.termsManager = new TermsManager(Paths.get(dir, Dictionary.TERMS_FILE_NAME).toString(), encoding, mmapSize);
@@ -107,7 +107,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable {
         elementsDos.flush();
 
         var statFile = Paths.get(dir, Dictionary.DICTIONARY_STATS_FILE).toFile();
-        try (var statsFos = new BufferedOutputStream(new FileOutputStream(statFile));
+        try (var statsFos = new BufferedOutputStream(new FileOutputStream(statFile, false));
              var statsOs = new DataOutputStream(statsFos)) {
             statsOs.writeInt(totalNumberOfTokens);
             statsOs.writeInt(uniqueNumberOfTokens);
