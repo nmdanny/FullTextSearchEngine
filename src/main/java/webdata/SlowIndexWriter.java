@@ -5,6 +5,7 @@ import webdata.dictionary.SequentialDictionaryBuilder;
 import webdata.parsing.ParallelReviewParser;
 import webdata.parsing.Review;
 import webdata.storage.CompactReview;
+import webdata.storage.ProductIdToDocIdMapper;
 import webdata.storage.ReviewStorage;
 
 import java.io.IOException;
@@ -33,7 +34,8 @@ public class SlowIndexWriter {
 
 
 			try (var seqDictBuilder = new SequentialDictionaryBuilder(dir, charset, mmapSize);
-				 var storage = ReviewStorage.inDirectory(dir))
+				 var storage = ReviewStorage.inDirectory(dir);
+				 var mapper = new ProductIdToDocIdMapper(dir, storage))
 			{
 				var dictBuilder = new InMemoryDictionaryBuilder(seqDictBuilder);
 				int bufSize = 1 << 16;
@@ -41,13 +43,20 @@ public class SlowIndexWriter {
 				var parser = new ParallelReviewParser(bufSize, numBufs, charset);
 
 				final int[] docId = {1};
+
 				parser.parse(inputFile)
-						.forEachOrdered(review -> {
-							review.assignDocId(docId[0]);
-							dictBuilder.processDocument(review.getDocId(), review.getTokens());
-							docId[0] += 1;
-							storage.add(new CompactReview(review));
-						});
+								.sequential()
+								.peek(review -> {
+									review.assignDocId(docId[0]);
+									dictBuilder.processDocument(review.getDocId(), review.getTokens());
+									docId[0] += 1;
+									storage.add(new CompactReview(review));
+								})
+								.sorted(Comparator.comparing(Review::getProductId).thenComparing(Review::getDocId))
+								.forEachOrdered(review -> {
+									mapper.observeProduct(review.getProductId(), review.getDocId());
+								});
+
 
 				storage.flush();
 				dictBuilder.finish();

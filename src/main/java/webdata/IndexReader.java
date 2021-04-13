@@ -1,6 +1,7 @@
 package webdata;
 
 import webdata.dictionary.Dictionary;
+import webdata.storage.ProductIdToDocIdMapper;
 import webdata.storage.ReviewStorage;
 
 import java.io.IOException;
@@ -14,6 +15,7 @@ public class IndexReader {
 	private static final Charset CHARSET = StandardCharsets.ISO_8859_1;
 	private final Dictionary dictionary;
 	private final ReviewStorage storage;
+	private final ProductIdToDocIdMapper prodToDoc;
 
 	/**
 	* Creates an IndexReader which will read from the given directory
@@ -22,6 +24,7 @@ public class IndexReader {
 		try {
 			dictionary = new Dictionary(dir, CHARSET, 1024 * 1024 * 50);
 			storage = ReviewStorage.inDirectory(dir);
+			prodToDoc = new ProductIdToDocIdMapper(dir, storage);
 		} catch (IOException ex) {
 			throw new RuntimeException("Couldn't read dictionary", ex);
 		}
@@ -155,17 +158,6 @@ public class IndexReader {
 	* Returns an empty Enumeration if there are no reviews for this product
 	*/
 	public Enumeration<Integer> getProductReviews(String productId) {
-	    int dictIndex = dictionary.getIndexOfToken(productId.toLowerCase());
-	    if (dictIndex < 0) {
-	    	return Utils.streamToEnumeration(Stream.empty());
-		}
-		try {
-		    throw new IOException("Todo");
-//		    return Utils.streamToEnumeration(storage.getReviewsForProduct(productId).boxed());
-		} catch (IOException e) {
-			System.err.format("Got IO exception while trying to get doc IDs for product %s: %s",
-					 		  dictIndex, e);
-			return Utils.streamToEnumeration(Stream.empty());
-		}
+		return Utils.streamToEnumeration(prodToDoc.getReviewIdsForProduct(productId).boxed());
 	}
 }

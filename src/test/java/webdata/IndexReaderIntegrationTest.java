@@ -99,14 +99,14 @@ public class IndexReaderIntegrationTest {
            assertEquals(entry.score, reader.getReviewScore(entry.docId));
            assertEquals(entry.helpfulnessNumerator, reader.getReviewHelpfulnessNumerator(entry.docId));
            assertEquals(entry.helpfulnessDenominator, reader.getReviewHelpfulnessDenominator(entry.docId));
+           // TODO: this doesn't cover all docIds
            assertEquals(entry.tokens.length, reader.getReviewLength(entry.docId));
 
-           // TODO: fix everything regarding doid ordering
            Iterable<Integer> expectedReviewsContaining = () -> IntStream.of(expected.productIdToReviewIds.get(entry.productId)).boxed().iterator();
-//           assertIterableEquals(
-//                   expectedReviewsContaining,
-//                   enumerationToList(reader.getProductReviews(entry.productId))
-//           );
+           assertIterableEquals(
+                   expectedReviewsContaining,
+                   enumerationToList(reader.getProductReviews(entry.productId))
+           );
        }
 
        for (var tokenAndPosting: expected.termToPostings.entrySet()) {
