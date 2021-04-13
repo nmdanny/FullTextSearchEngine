@@ -61,10 +61,7 @@ def scenario_builder(entries: Iterator[Entry]) -> Scenario:
     product_id_to_review_ids = defaultdict(OrderedDict)
     term_to_collection_frequency = defaultdict(lambda: 0)
 
-    for sorted_count, entry in zip(itertools.count(start=1), sorted(entries, key=lambda entry: entry.product_id)):
-        # TODO!!!! DELETE THIS
-        entry.doc_id = sorted_count
-        # !^^^!
+    for entry in sorted(entries, key=lambda entry: entry.product_id):
         product_id_to_entry[entry.product_id] = entry
 
         product_id_to_review_ids[entry.product_id][entry.doc_id] = True
@@ -76,7 +73,7 @@ def scenario_builder(entries: Iterator[Entry]) -> Scenario:
             token_to_freq_in_doc[token] += 1
 
         for token, freq_in_doc in token_to_freq_in_doc.items():
-            term_to_postings[token].extend([entry.doc_id, freq_in_doc])
+            term_to_postings[token].append((entry.doc_id, freq_in_doc))
             term_to_collection_frequency[token] += freq_in_doc
     
         total_tokens += len(entry.tokens)
@@ -85,6 +82,11 @@ def scenario_builder(entries: Iterator[Entry]) -> Scenario:
 
     # sort stuff
     product_id_to_entry = OrderedDict(sorted(product_id_to_entry.items()))
+    for term, postings in term_to_postings.items():
+        flat_postings = []
+        for doc_id, freq in sorted(postings, key=lambda tup: tup[0]):
+            flat_postings.extend([doc_id, freq])
+        term_to_postings[term] = flat_postings
     term_to_postings = OrderedDict(sorted(term_to_postings.items()))
     product_id_to_review_ids = { product_id: list(dic.keys()) for product_id, dic in product_id_to_review_ids.items()}
     term_to_collection_frequency = dict(term_to_collection_frequency)
