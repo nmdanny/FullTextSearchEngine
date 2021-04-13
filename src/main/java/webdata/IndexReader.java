@@ -32,14 +32,10 @@ public class IndexReader {
 	* Returns null if there is no review with the given identifier
 	*/
 	public String getProductId(int reviewId) {
-		try {
-			if (reviewId < 1 || reviewId > storage.getNumReviews()) {
-				return null;
-			}
-			return storage.get(reviewId).getProductId();
-		} catch (IOException e) {
-			throw new RuntimeException("Couldn't get product ID for " + reviewId + ": " + e);
+		if (reviewId < 1 || reviewId > storage.getNumReviews()) {
+			return null;
 		}
+		return storage.get(reviewId - 1).getProductId();
 	}
 
 	/**
@@ -47,14 +43,10 @@ public class IndexReader {
 	* Returns -1 if there is no review with the given identifier
 	*/
 	public int getReviewScore(int reviewId) {
-		try {
-			if (reviewId < 1 || reviewId > storage.getNumReviews()) {
-				return -1;
-			}
-			return storage.get(reviewId).getScore();
-		} catch (IOException e) {
-			throw new RuntimeException("Couldn't get review score for " + reviewId + ": " + e);
+		if (reviewId < 1 || reviewId > storage.getNumReviews()) {
+			return -1;
 		}
+		return storage.get(reviewId - 1).getScore();
 	}
 
 	/**
@@ -62,14 +54,10 @@ public class IndexReader {
 	* Returns -1 if there is no review with the given identifier
 	*/
 	public int getReviewHelpfulnessNumerator(int reviewId) {
-		try {
-			if (reviewId < 1 || reviewId > storage.getNumReviews()) {
-				return -1;
-			}
-			return storage.get(reviewId).getHelpfulnessNumerator();
-		} catch (IOException e) {
-			throw new RuntimeException("Couldn't get helpfulness numerator for " + reviewId + ": " + e);
+		if (reviewId < 1 || reviewId > storage.getNumReviews()) {
+			return -1;
 		}
+		return storage.get(reviewId - 1).getHelpfulnessNumerator();
 	}
 
 	/**
@@ -77,14 +65,10 @@ public class IndexReader {
 	* Returns -1 if there is no review with the given identifier
 	*/
 	public int getReviewHelpfulnessDenominator(int reviewId) {
-		try {
-			if (reviewId < 1 || reviewId > storage.getNumReviews()) {
-				return -1;
-			}
-			return storage.get(reviewId).getHelpfulnessDenominator();
-		} catch (IOException e) {
-			throw new RuntimeException("Couldn't get helpfulness denominator for " + reviewId + ": " + e);
+		if (reviewId < 1 || reviewId > storage.getNumReviews()) {
+			return -1;
 		}
+		return storage.get(reviewId - 1).getHelpfulnessDenominator();
 	}
 
 	/**
@@ -93,14 +77,10 @@ public class IndexReader {
 	*/
 	public int getReviewLength(int reviewId) {
 
-		try {
-			if (reviewId < 1 || reviewId > storage.getNumReviews()) {
-				return -1;
-			}
-			return storage.get(reviewId).getNumTokens();
-		} catch (IOException e) {
-			throw new RuntimeException("Couldn't get review length for " + reviewId + ": " + e);
+		if (reviewId < 1 || reviewId > storage.getNumReviews()) {
+			return -1;
 		}
+		return storage.get(reviewId - 1).getNumTokens();
 	}
 
 	/**
@@ -180,7 +160,8 @@ public class IndexReader {
 	    	return Utils.streamToEnumeration(Stream.empty());
 		}
 		try {
-		    return Utils.streamToEnumeration(storage.getReviewsForProduct(productId).boxed());
+		    throw new IOException("Todo");
+//		    return Utils.streamToEnumeration(storage.getReviewsForProduct(productId).boxed());
 		} catch (IOException e) {
 			System.err.format("Got IO exception while trying to get doc IDs for product %s: %s",
 					 		  dictIndex, e);

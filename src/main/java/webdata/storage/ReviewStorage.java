@@ -11,9 +11,45 @@ import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-/** Stores reviews sorted by product ID, allowing binary search via said ID */
-public class ReviewStorage implements Closeable, Flushable {
+public class ReviewStorage extends FixedRecordStorage<CompactReview> {
+    private static final String STORAGE_FILE = "storage.bin";
 
+    public ReviewStorage(Path path) throws IOException {
+       super(path.toString(), new FixedSizeRecordFactory<CompactReview>() {
+           @Override
+           public int sizeBytes() {
+               return CompactReview.SIZE_BYTES;
+           }
+
+           @Override
+           public CompactReview deserialize(ByteBuffer buf) throws IOException {
+               return CompactReview.deserialize(buf);
+           }
+
+           @Override
+           public void serialize(CompactReview compactReview, DataOutputStream dos) throws IOException {
+               compactReview.serialize(dos);
+           }
+       }, null);
+   }
+
+
+    public void appendMany(Stream<CompactReview> reviews) throws IOException {
+        reviews.forEachOrdered(this::add);
+    }
+
+   public static ReviewStorage inDirectory(String dir) throws IOException {
+       return new ReviewStorage(Path.of(dir, STORAGE_FILE));
+   }
+
+   public int getNumReviews() {
+        return size();
+   }
+}
+
+/** Stores reviews sorted by docID (original input file insertion order), allowing O(1) access to fields of a
+ *  review with a given docID. */
+class OldReviewStorage implements Closeable, Flushable {
     private static final String STORAGE_FILE = "storage.bin";
 
     private final String path;
@@ -26,7 +62,7 @@ public class ReviewStorage implements Closeable, Flushable {
     private int numReviews;
 
     /** Allows reading and writing compact reviews(without terms) to a binary file */
-    public ReviewStorage(Path path) throws IOException {
+    public OldReviewStorage(Path path) throws IOException {
         this.path = path.toString();
         this.file = new RandomAccessFile(this.path, "rw");
         this.channel = file.getChannel();
@@ -43,7 +79,7 @@ public class ReviewStorage implements Closeable, Flushable {
         return numReviews;
     }
 
-    /** Appends a stream of reviews(lexicographically sorted by product IDs) into the storage */
+    /** Appends a stream of reviews(assumed to be ordered via their docIDs) into the storage */
     public void appendMany(Stream<CompactReview> reviews) throws IOException {
         channel.position(file.length());
 
@@ -55,16 +91,16 @@ public class ReviewStorage implements Closeable, Flushable {
             while (it.hasNext()) {
                 var compactReview = it.next();
 
-                if (lastReview != null && compactReview.getProductId().compareTo(lastReview.getProductId()) < 0) {
-                    throw new IllegalArgumentException("Must append reviews in a lexicographically increasing product ID order");
-                }
+//                if (lastReview != null && compactReview.getProductId().compareTo(lastReview.getProductId()) < 0) {
+//                    throw new IllegalArgumentException("Must append reviews in a lexicographically increasing product ID order");
+//                }
                 lastReview = compactReview;
 
                 if (numReviews % 1000000 == 0) {
-                    System.out.format("+1mil Finished %d reviews so far\n", numReviews);
+//                    System.out.format("+1mil Finished %d reviews so far\n", numReviews);
                 }
                 if (numReviews % 5000000 == 0) {
-                    System.out.format("+5mil Finished %d reviews so far, flushing\n", numReviews);
+//                    System.out.format("+5mil Finished %d reviews so far, flushing\n", numReviews);
                     stream.flush();
                     channel.force(true);
                 }
@@ -81,7 +117,6 @@ public class ReviewStorage implements Closeable, Flushable {
         if (docId <= 0) {
             throw new IllegalArgumentException("docId must be positive");
         }
-        // docIds begin from 1, hence why we subtract one
         long filePos = docIdToFilePos(docId);
         channel.position(filePos);
         reviewBuf.clear();
@@ -104,6 +139,7 @@ public class ReviewStorage implements Closeable, Flushable {
     }
 
     private long docIdToFilePos(int docId) {
+        // docIds begin from 1, hence why we subtract one
         return ((long)docId - 1) * CompactReview.SIZE_BYTES;
     }
 
@@ -113,7 +149,7 @@ public class ReviewStorage implements Closeable, Flushable {
             @Override
             public String get(int index) {
                 try {
-                    return ReviewStorage.this.get(index + 1).getProductId();
+                    return OldReviewStorage.this.get(index + 1).getProductId();
                 } catch (IOException ex) {
                     throw new RuntimeException(String.format("Got IO error while getting document of ID %d", index + 1));
                 }

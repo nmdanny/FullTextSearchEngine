@@ -41,22 +41,15 @@ public class SlowIndexWriter {
 				var parser = new ParallelReviewParser(bufSize, numBufs, charset);
 
 				final int[] docId = {1};
-				storage.appendMany(parser.parse(inputFile)
-//						.peek(review -> {
-//							review.assignDocId(docId[0]);
-//							docId[0] += 1;
-//						})
-						.sorted(Comparator.comparing(Review::getProductId))
-						.sequential()
-						.peek(review -> {
-
-							// TODO!!! delete below, use above(docIDS should be assigned before sorting)
-                            review.assignDocId(docId[0]);
-                            docId[0] += 1;
+				parser.parse(inputFile)
+						.forEachOrdered(review -> {
+							review.assignDocId(docId[0]);
 							dictBuilder.processDocument(review.getDocId(), review.getTokens());
-						})
-						.map(CompactReview::new));
+							docId[0] += 1;
+							storage.add(new CompactReview(review));
+						});
 
+				storage.flush();
 				dictBuilder.finish();
 			}
 
