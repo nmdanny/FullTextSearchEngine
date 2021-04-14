@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 
 /** Responsible for decoding strings compressed via (k-1)-in-k front coding. */
@@ -47,27 +48,34 @@ public class FrontCodingDecoder implements Closeable {
     }
 
     private String decodeFirstElement(FrontCodingResult result) throws IOException {
-        assert result.prefixLength == 0;
+        assert result.prefixLengthChars == 0;
 
-        if (result.suffixLength > readBuf.capacity()) {
-            readBuf = ByteBuffer.allocate(result.suffixLength * 2);
+        if (result.suffixLengthBytes > readBuf.capacity()) {
+            readBuf = ByteBuffer.allocate(result.suffixLengthBytes * 2);
         }
-        int read = is.readNBytes(readBuf.array(), 0, result.suffixLength);
-        assert read == result.suffixLength;
+        int read = is.readNBytes(readBuf.array(), 0, result.suffixLengthBytes);
+        assert read == result.suffixLengthBytes;
 
-        readBuf.position(0).limit(result.suffixLength);
+        readBuf.position(0).limit(result.suffixLengthBytes);
         String suffix = charsetDecoder.decode(readBuf).toString();
 
+        this.prevWord = suffix;
         return suffix;
     }
 
     private String decodeAnyOtherElement(FrontCodingResult result) throws IOException {
-        int read = is.readNBytes(readBuf.array(), 0, result.suffixLength);
-        assert read == result.suffixLength;
+        readBuf.clear();
+        var arr = readBuf.array();
+        for (int i=0; i < readBuf.capacity(); ++i) {
+            arr[i] = 0;
+        }
+
+        int read = is.readNBytes(readBuf.array(), 0, result.suffixLengthBytes);
+        assert read == result.suffixLengthBytes;
 
 
-        String prefix = prevWord.substring(0, result.prefixLength);
-        readBuf.position(0).limit(result.suffixLength);
+        String prefix = prevWord.substring(0, result.prefixLengthChars);
+        readBuf.position(0).limit(result.suffixLengthBytes);
         String suffix = charsetDecoder.decode(readBuf).toString();
 
         this.prevWord = prefix + suffix;
@@ -94,7 +102,6 @@ public class FrontCodingDecoder implements Closeable {
             ret = decodeAnyOtherElement(result);
         }
         ++numElements;
-        this.prevWord = ret;
         return ret;
     }
 

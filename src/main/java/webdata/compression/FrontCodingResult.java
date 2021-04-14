@@ -5,17 +5,17 @@ package webdata.compression;
  */
 public class FrontCodingResult {
     public final long suffixPos;
-    public final int prefixLength;
-    public final int suffixLength;
+    public final int prefixLengthChars;
+    public final int suffixLengthBytes;
 
     /**
      * @param suffixPos    Byte position where suffix starts
-     * @param prefixLength Length of the prefix (in bytes)
-     * @param suffixLength Length of the suffix (in bytes)
+     * @param prefixLengthChars Length of the prefix (in chars!)
+     * @param suffixLengthBytes Length of the suffix (in bytes)
      */
-    FrontCodingResult(long suffixPos, int prefixLength, int suffixLength) {
+    FrontCodingResult(long suffixPos, int prefixLengthChars, int suffixLengthBytes) {
         this.suffixPos = suffixPos;
-        this.suffixLength = suffixLength;
-        this.prefixLength = prefixLength;
+        this.prefixLengthChars = prefixLengthChars;
+        this.suffixLengthBytes = suffixLengthBytes;
     }
 }

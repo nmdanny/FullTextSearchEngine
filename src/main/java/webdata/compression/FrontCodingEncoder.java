@@ -42,7 +42,7 @@ public class FrontCodingEncoder implements Closeable, Flushable {
         long pos = numBytesWritten;
         int suffixLengthBytes = bytes.limit();
 
-        os.write(bytes.array());
+        os.write(bytes.array(), 0, suffixLengthBytes);
         numBytesWritten += suffixLengthBytes;
 
         return new FrontCodingResult(pos, 0, suffixLengthBytes);
@@ -63,15 +63,14 @@ public class FrontCodingEncoder implements Closeable, Flushable {
 
     private FrontCodingResult addWithPrefix(String string) throws IOException {
         int prefixLength = greatestCommonPrefix(string, curPrefix);
-        int prefixLengthBytes = charsetEncoder.encode(CharBuffer.wrap(string, 0, prefixLength)).limit();
         var suffixBytes = charsetEncoder.encode(CharBuffer.wrap(string, prefixLength, string.length()));
         long pos = numBytesWritten;
         int suffixLengthBytes = suffixBytes.limit();
 
-        os.write(suffixBytes.array());
+        os.write(suffixBytes.array(), 0, suffixLengthBytes);
         numBytesWritten += suffixLengthBytes;
 
-        return new FrontCodingResult(pos, prefixLengthBytes, suffixLengthBytes);
+        return new FrontCodingResult(pos, prefixLength, suffixLengthBytes);
     }
 
     /** Encodes a new string, returning information that can be used to decode it via front coding */
