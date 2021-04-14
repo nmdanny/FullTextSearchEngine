@@ -49,6 +49,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable {
 
     /** Begins a new term */
     public void beginTerm(String term) throws IOException {
+        assert !term.isEmpty() : "Terms should not be empty";
         if (postingListWriter.getCurrentTerm() != null && postingListWriter.getCurrentTerm().compareTo(term) >= 0)
         {
             throw new IllegalArgumentException("Terms must be written into dictionary in lexicographically increasing order");

@@ -33,6 +33,9 @@ public class InMemoryDictionaryBuilder {
         var tokenToOccurrence = new HashMap<String, TermOccurrence>();
         for (var token: tokens) {
             TermOccurrence occurrence = tokenToOccurrence.get(token);
+            if (token.isEmpty()) {
+                continue;
+            }
             if (occurrence == null) {
                 occurrence = new TermOccurrence();
                 occurrence.docId = docId;
