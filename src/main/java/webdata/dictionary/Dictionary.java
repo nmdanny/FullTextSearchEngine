@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /** Contains the in memory dictionary, allowing querying it */
@@ -185,5 +186,10 @@ public class Dictionary {
     /** Returns the number of different tokens in the dictionary.  */
     public int getUniqueNumberOfTokens() {
         return uniqueNumberOfTokens;
+    }
+
+    /** Returns a stream of all different tokens in the dictionary, sorted lexicographically */
+    public Stream<String> getTokens() {
+        return IntStream.range(0, elements.size()).mapToObj(this::getTerm);
     }
 }
