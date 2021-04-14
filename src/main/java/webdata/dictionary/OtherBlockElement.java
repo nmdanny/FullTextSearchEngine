@@ -3,7 +3,6 @@ package webdata.dictionary;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.CharBuffer;
 
 /**
  * Represents a block element which isn't the first
@@ -11,14 +10,16 @@ import java.nio.CharBuffer;
 class OtherBlockElement implements DictionaryElement {
     final int frequency;
     final int postingPtr;
-    final int termLength;
+    final int prefixLength;
+    final int suffixLength;
 
-    static final int SIZE_BYTES = 4 * 3;
+    static final int SIZE_BYTES = 4 * 4;
 
-    public OtherBlockElement(int frequency, int postingPtr, int termLength) {
+    public OtherBlockElement(int frequency, int postingPtr, int prefixLength, int suffixLength) {
         this.frequency = frequency;
         this.postingPtr = postingPtr;
-        this.termLength = termLength;
+        this.prefixLength = prefixLength;
+        this.suffixLength = suffixLength;
     }
 
     @Override
@@ -34,13 +35,15 @@ class OtherBlockElement implements DictionaryElement {
     public void serialize(DataOutputStream out) throws IOException {
         out.writeInt(frequency);
         out.writeInt(postingPtr);
-        out.writeInt(termLength);
+        out.writeInt(prefixLength);
+        out.writeInt(suffixLength);
     }
 
     public static OtherBlockElement deserialize(DataInputStream in) throws IOException {
         int frequency = in.readInt();
         int postingPtr = in.readInt();
-        int termLength = in.readInt();
-        return new OtherBlockElement(frequency, postingPtr, termLength);
+        int prefixLength = in.readInt();
+        int suffixLength = in.readInt();
+        return new OtherBlockElement(frequency, postingPtr, prefixLength, suffixLength);
     }
 }

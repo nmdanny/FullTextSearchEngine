@@ -3,8 +3,6 @@ package webdata.dictionary;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 
 /**
  * Represents the first element in a block, which contains a term pointer
@@ -12,16 +10,16 @@ import java.nio.CharBuffer;
 class FirstBlockElement implements DictionaryElement {
     final int frequency;
     final int postingPtr;
-    final int termLength;
-    final int termPointer;
+    final int suffixLength;
+    final int suffixPos;
 
     static final int SIZE_BYTES = 4 * 4;
 
-    public FirstBlockElement(int frequency, int postingPtr, int termLength, int termPointer) {
+    public FirstBlockElement(int frequency, int postingPtr, int suffixLength, int suffixPos) {
         this.frequency = frequency;
         this.postingPtr = postingPtr;
-        this.termLength = termLength;
-        this.termPointer = termPointer;
+        this.suffixLength = suffixLength;
+        this.suffixPos = suffixPos;
     }
 
     @Override
@@ -37,16 +35,16 @@ class FirstBlockElement implements DictionaryElement {
     public void serialize(DataOutputStream out) throws IOException {
         out.writeInt(frequency);
         out.writeInt(postingPtr);
-        out.writeInt(termLength);
-        out.writeInt(termPointer);
+        out.writeInt(suffixLength);
+        out.writeInt(suffixPos);
     }
 
     public static FirstBlockElement deserialize(DataInputStream in) throws IOException {
         int frequency = in.readInt();
         int postingPtr = in.readInt();
-        int termLength = in.readInt();
-        int termPointer = in.readInt();
-        return new FirstBlockElement(frequency, postingPtr, termLength, termPointer);
+        int suffixLength = in.readInt();
+        int suffixPos = in.readInt();
+        return new FirstBlockElement(frequency, postingPtr, suffixLength, suffixPos);
     }
 
 }

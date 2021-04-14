@@ -36,7 +36,7 @@ public class DictionaryTest {
         dictionaryBuilder.processDocument(2, "גנן גידל דגן בגן, דגן גדול גדל בגן test");
         dictionaryBuilder.finish();
 
-        dict = new Dictionary(tempDir.toString(), charset, 1024);
+        dict = new Dictionary(tempDir.toString(), charset);
 
         termAndDocumentFreq = new Object[][] {
 
@@ -65,7 +65,7 @@ public class DictionaryTest {
         assertEquals(dict.getUniqueNumberOfTokens(), elements.size());
         for (int i = 0; i < termAndDocumentFreq.length; ++i) {
             Object[] expectedElement = termAndDocumentFreq[i];
-            assertEquals(expectedElement[0], charset.decode(dict.getTerm(i)).toString());
+            assertEquals(expectedElement[0], dict.getTerm(i));
             assertEquals(expectedElement[1], dict.getTokenFrequency(i));
         }
 
@@ -74,7 +74,7 @@ public class DictionaryTest {
                 .map(arr -> (String)arr[0]).sorted().collect(Collectors.toList());
         Dictionary finalDict = dict;
         var gottenOrdering = IntStream.range(0, dict.getUniqueNumberOfTokens())
-                .mapToObj(ix -> charset.decode(finalDict.getTerm(ix)).toString()).collect(Collectors.toList());
+                .mapToObj(finalDict::getTerm).collect(Collectors.toList());
 
         assertIterableEquals(orderedElements, gottenOrdering);
     }
@@ -87,7 +87,7 @@ public class DictionaryTest {
             var elementIx = dict.getIndexOfToken(term);
             assertTrue(elementIx >= 0);
 
-            assertEquals(term, charset.decode(dict.getTerm(elementIx)).toString());
+            assertEquals(term, dict.getTerm(elementIx));
             assertEquals(freq, dict.getTokenFrequency(elementIx));
         }
     }

@@ -1,12 +1,11 @@
 package webdata.dictionary;
 
 import webdata.Utils;
+import webdata.compression.FrontCodingDecoder;
+import webdata.compression.FrontCodingResult;
 import webdata.inverted_index.PostingListReader;
-import webdata.inverted_index.PostingListWriter;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.charset.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,8 +17,6 @@ import java.util.stream.Stream;
 public class Dictionary {
 
     private final String dir;
-    private final Charset encoding;
-    private final CharsetDecoder charsetDecoder;
 
     private PackedDictionaryElements elements;
     static final int BLOCK_SIZE = 4;
@@ -29,7 +26,9 @@ public class Dictionary {
 
     // Contains the terms
     static final String TERMS_FILE_NAME = "terms.bin";
-    private final TermsManager termsManager;
+    private final byte[] termsBuf;
+    private ByteArrayInputStream termsIs;
+    private final FrontCodingDecoder decoder;
 
     // Contains the dictionary elements
     static final String DICTIONARY_FILE_NAME = "dictionary.bin";
@@ -45,22 +44,24 @@ public class Dictionary {
     /**
      * @param dir Directory of index files
      * @param encoding Encoding of terms
-     * @param mmapSize Size of memory mapped file containing terms
      * @throws IOException In case of IO error
      */
-    public Dictionary(String dir, Charset encoding, int mmapSize) throws IOException {
+    public Dictionary(String dir, Charset encoding) throws IOException {
         this.dir = dir;
-        this.encoding = encoding;
-        this.charsetDecoder = encoding.newDecoder()
-                .onMalformedInput(CodingErrorAction.REPLACE)
-                .onUnmappableCharacter(CodingErrorAction.REPLACE);
-
 
 //        if (Files.exists(Path.of(dir, DICTIONARY_FILE_NAME)) && Files.exists(Path.of(dir, POSTINGS_FILE_NAME))) {
 
         deserialize();
         this.postingListReader = new PostingListReader(Path.of(dir, POSTINGS_FILE_NAME).toString());
-        this.termsManager = new TermsManager(Paths.get(dir, TERMS_FILE_NAME).toString(), encoding, mmapSize);
+
+        this.termsBuf  = Files.readAllBytes(Paths.get(dir, TERMS_FILE_NAME));
+        this.termsIs = new ByteArrayInputStream(this.termsBuf);
+
+        this.decoder = new FrontCodingDecoder(
+                Dictionary.BLOCK_SIZE,
+                encoding,
+                this.termsIs
+        );
     }
 
     public void deserialize(DataInputStream statsIs, DataInputStream elementsIs) throws IOException {
@@ -90,22 +91,45 @@ public class Dictionary {
     }
 
     /** Returns the term of this element, assuming its index is known */
-    ByteBuffer getTerm(int index) {
-        if (index % BLOCK_SIZE == 0) {
-            var element = ((FirstBlockElement)this.elements.get(index));
-            return termsManager.derefTermBytes(element.termPointer, element.termLength);
-        } else {
-            int firstBlockIndex = index - index % BLOCK_SIZE;
-            var firstBlockElement = ((FirstBlockElement)this.elements.get(firstBlockIndex));
-
-            int termPointer = firstBlockElement.termPointer + firstBlockElement.termLength;
-            for (int prevBlockIndex = firstBlockIndex + 1; prevBlockIndex < index; ++prevBlockIndex) {
-                termPointer += ((OtherBlockElement)this.elements.get(prevBlockIndex)).termLength;
-            }
-
-            var selectedBlockElement = ((OtherBlockElement)this.elements.get(index));
-            return termsManager.derefTermBytes(termPointer, selectedBlockElement.termLength);
+    String getTerm(int index) {
+        try {
+            return getTermInner(index);
+        } catch (IOException ex) {
+            throw new RuntimeException("Impossible: IO exception for a ByteArrayInputStream", ex);
         }
+    }
+
+    private String getTermInner(int index) throws IOException {
+
+        int posInBlock = index % BLOCK_SIZE;
+        var firstBlockElement = (FirstBlockElement)this.elements.get(index - posInBlock);
+        var frontCodingResult = new FrontCodingResult(
+                firstBlockElement.suffixPos,
+                0,
+                firstBlockElement.suffixLength
+        );
+
+        this.termsIs = new ByteArrayInputStream(this.termsBuf);
+        long skipped = this.termsIs.skip(frontCodingResult.suffixPos);
+        assert skipped == frontCodingResult.suffixPos;
+        decoder.reset(this.termsIs);
+
+        String term = decoder.decodeElement(frontCodingResult);
+
+        // now, iterate over the rest of the blocks if the position in the block isn't 0
+        long curSuffixPos = frontCodingResult.suffixPos + frontCodingResult.suffixLengthBytes;
+        for (int curIndex = index - posInBlock + 1; curIndex <= index; ++curIndex) {
+            var otherBlockElement = (OtherBlockElement)this.elements.get(curIndex);
+            frontCodingResult = new FrontCodingResult(
+                    curSuffixPos,
+                    otherBlockElement.prefixLength,
+                    otherBlockElement.suffixLength
+            );
+            term = decoder.decodeElement(frontCodingResult);
+            curSuffixPos += frontCodingResult.suffixLengthBytes;
+        }
+
+        return term;
     }
 
     /** Returns the number of documents containing at least 1 occurrences of the term at given index.
@@ -136,11 +160,7 @@ public class Dictionary {
 
         @Override
         public String get(int index) {
-            try {
-                return charsetDecoder.decode(getTerm(index)).toString();
-            } catch (CharacterCodingException e) {
-               throw new RuntimeException("Impossible: charset decoding failed");
-            }
+            return getTerm(index);
         }
     };
 
@@ -150,11 +170,6 @@ public class Dictionary {
      */
     public int getIndexOfToken(String token) {
         return Collections.binarySearch(abstractList, token);
-    }
-
-    /** Returns the encoding used by this dictionary. */
-    public Charset getEncoding() {
-        return encoding;
     }
 
     /** Returns a stream over all dictionary elements */

@@ -13,7 +13,7 @@ public class FrontCodingResult {
      * @param prefixLengthChars Length of the prefix (in chars!)
      * @param suffixLengthBytes Length of the suffix (in bytes)
      */
-    FrontCodingResult(long suffixPos, int prefixLengthChars, int suffixLengthBytes) {
+    public FrontCodingResult(long suffixPos, int prefixLengthChars, int suffixLengthBytes) {
         this.suffixPos = suffixPos;
         this.prefixLengthChars = prefixLengthChars;
         this.suffixLengthBytes = suffixLengthBytes;

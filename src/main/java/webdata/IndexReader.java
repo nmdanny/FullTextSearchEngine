@@ -22,7 +22,7 @@ public class IndexReader {
 	*/
 	public IndexReader(String dir) {
 		try {
-			dictionary = new Dictionary(dir, CHARSET, 1024 * 1024 * 50);
+			dictionary = new Dictionary(dir, CHARSET);
 			storage = ReviewStorage.inDirectory(dir);
 			prodToDoc = new ProductIdToDocIdMapper(dir, storage);
 		} catch (IOException ex) {

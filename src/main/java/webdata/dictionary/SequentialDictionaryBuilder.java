@@ -1,5 +1,6 @@
 package webdata.dictionary;
 
+import webdata.compression.FrontCodingEncoder;
 import webdata.inverted_index.PostingListWriter;
 
 import java.io.*;
@@ -15,7 +16,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable {
     private final DataOutputStream elementsDos;
 
     private final PostingListWriter postingListWriter;
-    private final TermsManager termsManager;
+    private final FrontCodingEncoder encoder;
 
     private String curTerm;
     private int curTermPostingPtr;
@@ -38,7 +39,12 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable {
         var postingsFos = new FileOutputStream(Paths.get(dir, Dictionary.POSTINGS_FILE_NAME).toString(), false);
         var postingsOs = new BufferedOutputStream(postingsFos);
         this.postingListWriter = new PostingListWriter(postingsOs);
-        this.termsManager = new TermsManager(Paths.get(dir, Dictionary.TERMS_FILE_NAME).toString(), encoding, mmapSize);
+
+        this.encoder = new FrontCodingEncoder(
+                Dictionary.BLOCK_SIZE,
+                encoding,
+                new BufferedOutputStream(new FileOutputStream(Paths.get(dir, Dictionary.TERMS_FILE_NAME).toString(), false))
+        );
     }
 
     /** Begins a new term */
@@ -61,22 +67,27 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable {
             throw new IllegalStateException("You cannot end a term which has an empty posting list");
         }
 
-        var termAllocationResult = termsManager.allocateTerm(postingListWriter.getCurrentTerm());
+        var frontCodingResult = encoder.encodeString(postingListWriter.getCurrentTerm());
+
+        assert (frontCodingResult.suffixPos <= Integer.MAX_VALUE) : "Can only support terms file with 2^31 entries";
 
         // begin a new block
         if (uniqueNumberOfTokens % Dictionary.BLOCK_SIZE == 0) {
+            assert frontCodingResult.prefixLengthChars == 0;
             var element = new FirstBlockElement(
                     postingListWriter.getCurrentTermDocumentFrequency(),
                     curTermPostingPtr,
-                    termAllocationResult.length,
-                    termAllocationResult.position);
+                    frontCodingResult.suffixLengthBytes,
+                    (int)frontCodingResult.suffixPos
+            );
             element.serialize(elementsDos);
         } else {
             // add to previous block
             var element = new OtherBlockElement(
                     postingListWriter.getCurrentTermDocumentFrequency(),
                     curTermPostingPtr,
-                    termAllocationResult.length
+                    frontCodingResult.prefixLengthChars,
+                    frontCodingResult.suffixLengthBytes
             );
             element.serialize(elementsDos);
         }
@@ -96,14 +107,14 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable {
     public void close() throws IOException {
         flush();
         postingListWriter.close();
-        termsManager.close();
+        encoder.close();
         elementsDos.close();
     }
 
     @Override
     public void flush() throws IOException {
         postingListWriter.flush();
-        termsManager.flush();
+        encoder.flush();
         elementsDos.flush();
 
         var statFile = Paths.get(dir, Dictionary.DICTIONARY_STATS_FILE).toFile();
