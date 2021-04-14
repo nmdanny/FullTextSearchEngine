@@ -1,0 +1,15 @@
+CSE: danielkerbel
+ID: ***REMOVED***
+
+
+# Compiling
+
+Requires Java 11+, should work on Aquarium PCs
+
+1. Extract the jar via `jar -xvf THE_JAR_FILE.jar`
+
+2. Compile by running `javac webdata/**.java`
+
+3. Create a library jar via `jar -cvf webdata.jar webdata/**.class`
+
+

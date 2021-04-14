@@ -16,15 +16,15 @@ import java.util.*;
 
 public class Main {
 
-    static final Charset DATASET_ENCODING = StandardCharsets.ISO_8859_1;
     public static void main(String[] args) throws IOException {
 
-        var txtPath = Path.of("datasets", "1000.txt");
-        var txtDirPath = Path.of("datasets", "1000");
-        var writer = new SlowIndexWriter();
-        writer.slowWrite(txtPath.toString(), txtDirPath.toString());
+        var inputFile = args[0];
+        var indexDir = args[1];
 
-        var reader = new IndexReader(txtDirPath.toString());
+        var writer = new SlowIndexWriter();
+        writer.slowWrite(inputFile, indexDir);
+
+        var reader = new IndexReader(indexDir);
 
         System.out.format("getTokenSizeOfReviews: %d\ngetNumberOfReviews: %d\n",
                 reader.getTokenSizeOfReviews(),

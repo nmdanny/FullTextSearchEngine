@@ -140,7 +140,7 @@ public class Dictionary {
         return this.elements.get(index).getTokenFrequency();
     }
 
-    /** Returns a sequence of docID & freq pairs of documents containing term at given index. */
+    /** Returns a sequence of docID and freq pairs of documents containing term at given index. */
     public Enumeration<Integer> getDocIdsAndFreqs(int index) throws IOException {
         var element = this.elements.get(index);
         try {
