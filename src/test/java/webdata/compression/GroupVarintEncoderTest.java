@@ -1,4 +1,4 @@
-//package test;
+package webdata.compression;//package test;
 
 import org.junit.jupiter.api.Test;
 

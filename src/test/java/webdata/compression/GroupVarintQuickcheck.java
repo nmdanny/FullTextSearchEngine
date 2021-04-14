@@ -1,3 +1,5 @@
+package webdata.compression;
+
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
@@ -6,10 +8,8 @@ import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
 import com.pholser.junit.quickcheck.Property;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 
-import static org.hamcrest.Matchers.*;
 import static org.junit.Assume.assumeThat;
 
 @RunWith(JUnitQuickcheck.class)
