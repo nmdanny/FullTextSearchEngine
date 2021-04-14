@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class DictionaryTest {
 
-    Charset charset;
     Path tempDir;
     Dictionary dict;
     Object[][] termAndDocumentFreq;
@@ -27,16 +26,15 @@ public class DictionaryTest {
 
     @BeforeEach
     void setupDictionary() throws IOException {
-        charset = StandardCharsets.UTF_8;
         tempDir = Files.createTempDirectory("canCreateSmallDictionary");
-        var seqDictBuilder = new SequentialDictionaryBuilder(tempDir.toString(), charset, 1024);
+        var seqDictBuilder = new SequentialDictionaryBuilder(tempDir.toString());
 
         var dictionaryBuilder = new InMemoryDictionaryBuilder(seqDictBuilder);
         dictionaryBuilder.processDocument(1, "שרה שרה שיר שמח שיר שמח שרה שרה test");
         dictionaryBuilder.processDocument(2, "גנן גידל דגן בגן, דגן גדול גדל בגן test");
         dictionaryBuilder.finish();
 
-        dict = new Dictionary(tempDir.toString(), charset);
+        dict = new Dictionary(tempDir.toString());
 
         termAndDocumentFreq = new Object[][] {
 

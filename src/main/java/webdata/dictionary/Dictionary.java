@@ -26,7 +26,9 @@ public class Dictionary {
 
 
     // Contains the terms
-    static final String TERMS_FILE_NAME = "terms.bin";
+    static final String TERMS_FILE_NAME = "terms.txt";
+    static final Charset TERMS_FILE_ENCODING = StandardCharsets.UTF_8;
+
     private final byte[] termsBuf;
     private ByteArrayInputStream termsIs;
     private final FrontCodingDecoder decoder;
@@ -44,10 +46,9 @@ public class Dictionary {
 
     /**
      * @param dir Directory of index files
-     * @param encoding Encoding of terms
      * @throws IOException In case of IO error
      */
-    public Dictionary(String dir, Charset encoding) throws IOException {
+    public Dictionary(String dir) throws IOException {
         this.dir = dir;
 
 //        if (Files.exists(Path.of(dir, DICTIONARY_FILE_NAME)) && Files.exists(Path.of(dir, POSTINGS_FILE_NAME))) {
@@ -60,7 +61,7 @@ public class Dictionary {
 
         this.decoder = new FrontCodingDecoder(
                 Dictionary.BLOCK_SIZE,
-                encoding,
+                Dictionary.TERMS_FILE_ENCODING,
                 this.termsIs
         );
     }

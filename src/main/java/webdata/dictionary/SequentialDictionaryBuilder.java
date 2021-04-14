@@ -23,7 +23,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable {
     private int totalNumberOfTokens;
     private int uniqueNumberOfTokens;
 
-    public SequentialDictionaryBuilder(String dir, Charset encoding, int mmapSize) throws IOException {
+    public SequentialDictionaryBuilder(String dir) throws IOException {
         this.dir = dir;
         this.curTerm = null;
         this.curTermPostingPtr = -1;
@@ -42,7 +42,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable {
 
         this.encoder = new FrontCodingEncoder(
                 Dictionary.BLOCK_SIZE,
-                encoding,
+                Dictionary.TERMS_FILE_ENCODING,
                 new BufferedOutputStream(new FileOutputStream(Paths.get(dir, Dictionary.TERMS_FILE_NAME).toString(), false))
         );
     }

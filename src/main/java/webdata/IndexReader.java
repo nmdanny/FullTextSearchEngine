@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 
 public class IndexReader {
 
-	private static final Charset CHARSET = StandardCharsets.ISO_8859_1;
 	private final Dictionary dictionary;
 	private final ReviewStorage storage;
 	private final ProductIdToDocIdMapper prodToDoc;
@@ -22,7 +21,7 @@ public class IndexReader {
 	*/
 	public IndexReader(String dir) {
 		try {
-			dictionary = new Dictionary(dir, CHARSET);
+			dictionary = new Dictionary(dir);
 			storage = ReviewStorage.inDirectory(dir);
 			prodToDoc = new ProductIdToDocIdMapper(dir, storage);
 		} catch (IOException ex) {

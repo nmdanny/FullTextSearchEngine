@@ -29,18 +29,17 @@ public class SlowIndexWriter {
 			removeIndex(dir);
 			Files.createDirectories(Path.of(dir));
 
-			int mmapSize = (int)Long.min(Integer.MAX_VALUE, Files.size(Path.of(inputFile)));
-			Charset charset = StandardCharsets.ISO_8859_1;
+			Charset inputFileCharset = StandardCharsets.ISO_8859_1;
 
 
-			try (var seqDictBuilder = new SequentialDictionaryBuilder(dir, charset, mmapSize);
+			try (var seqDictBuilder = new SequentialDictionaryBuilder(dir);
 				 var storage = ReviewStorage.inDirectory(dir);
 				 var mapper = new ProductIdToDocIdMapper(dir, storage))
 			{
 				var dictBuilder = new InMemoryDictionaryBuilder(seqDictBuilder);
 				int bufSize = 1 << 16;
 				int numBufs = 4;
-				var parser = new ParallelReviewParser(bufSize, numBufs, charset);
+				var parser = new ParallelReviewParser(bufSize, numBufs, inputFileCharset);
 
 				final int[] docId = {1};
 
