@@ -84,9 +84,7 @@ public class SlowIndexWriter {
 			if (!deletedAllFiles) {
 				System.err.println("Couldn't delete all files within directory\n");
 			}
-			if (!Files.deleteIfExists(Paths.get(dir))) {
-				System.err.println("Deleted all files within directory, but couldn't delete directory.\n");
-			}
+			Files.deleteIfExists(Paths.get(dir));
 		} catch (IOException ex) {
 			System.err.format("Got exception while trying to delete index at %s: %s\n", dir, ex.toString());
 		}
