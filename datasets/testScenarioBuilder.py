@@ -11,6 +11,12 @@ import re
 import json
 
 ENCODING = "iso-8859-1"
+# ENCODING = "utf-8"
+NOT_ALPHANUM = re.compile("\\W+", re.UNICODE)
+
+
+def tokenize(tokens: str) -> List[str]:
+    return [token.lower() for token in NOT_ALPHANUM.split(tokens) if token]
 
 @dataclass
 class Entry():
@@ -22,10 +28,7 @@ class Entry():
     tokens: List[str]
 
 
-not_alnum = re.compile("\\W", re.UNICODE)
 
-def tokenize(tokens: str) -> List[str]:
-    return [token.lower() for token in not_alnum.split(tokens) if token]
 
 def entry_to_typed(entry: Dict, doc_id: int) -> Entry:
     helpfulness = entry["review/helpfulness"]
@@ -47,7 +50,7 @@ class Scenario:
     total_tokens: int
     unique_tokens: int
     num_reviews: int
-    product_id_to_entry: OrderedDict[str, Entry]
+    product_id_to_entry: OrderedDict[str, List[Entry]]
     term_to_postings: OrderedDict[str, List[int]]
     term_to_collection_frequency: Dict[str, int]
     product_id_to_review_ids: Dict[str, List[int]]
@@ -55,14 +58,14 @@ class Scenario:
 
 def scenario_builder(entries: Iterator[Entry]) -> Scenario:
     total_tokens = 0
-    product_id_to_entry = {}
+    product_id_to_entry = defaultdict(list)
     num_reviews = 0
     term_to_postings = defaultdict(list)
     product_id_to_review_ids = defaultdict(OrderedDict)
     term_to_collection_frequency = defaultdict(lambda: 0)
 
     for entry in sorted(entries, key=lambda entry: entry.product_id):
-        product_id_to_entry[entry.product_id] = entry
+        product_id_to_entry[entry.product_id].append(entry)
 
         product_id_to_review_ids[entry.product_id][entry.doc_id] = True
 

@@ -26,7 +26,7 @@ class ExpectedResults {
     int totalTokens;
     int uniqueTokens;
     int numReviews;
-    TreeMap<String, Entry> productIdToEntry;
+    TreeMap<String, Entry[]> productIdToEntry;
     TreeMap<String, int[]> termToPostings;
     TreeMap<String, Integer> termToCollectionFrequency;
     TreeMap<String, int[]> productIdToReviewIds;
@@ -61,7 +61,7 @@ public class IndexReaderIntegrationTest {
     static Scenario loadScenario(Path txtPath) throws IOException {
 
         var fileNameNoExt  = txtPath.getFileName().toString().replace(".txt", "");
-        var tempDir = Files.createTempDirectory("IndexReaderTest-" + fileNameNoExt);
+        var tempDir = Files.createTempDirectory("IndexReaderTest-" + fileNameNoExt + "-");
 
         var scen = new Scenario();
         scen.tempDir = tempDir;
@@ -93,13 +93,15 @@ public class IndexReaderIntegrationTest {
         var expected = scenario.expectedObject;
 
        for (var productIdAndEntry : expected.productIdToEntry.entrySet()) {
-           var entry = productIdAndEntry.getValue();
+           var entries = productIdAndEntry.getValue();
+
+           assert entries.length > 0;
+           var entry = entries[0];
 
            assertEquals(entry.productId, reader.getProductId(entry.docId));
            assertEquals(entry.score, reader.getReviewScore(entry.docId));
            assertEquals(entry.helpfulnessNumerator, reader.getReviewHelpfulnessNumerator(entry.docId));
            assertEquals(entry.helpfulnessDenominator, reader.getReviewHelpfulnessDenominator(entry.docId));
-           // TODO: this doesn't cover all docIds
            assertEquals(entry.tokens.length, reader.getReviewLength(entry.docId));
 
            Iterable<Integer> expectedReviewsContaining = () -> IntStream.of(expected.productIdToReviewIds.get(entry.productId)).boxed().iterator();
@@ -107,6 +109,16 @@ public class IndexReaderIntegrationTest {
                    expectedReviewsContaining,
                    enumerationToList(reader.getProductReviews(entry.productId))
            );
+
+           for (int entryIx = 1; entryIx < entries.length; ++entryIx) {
+               int curDocId = entries[entryIx].docId;
+               Entry curEntry = entries[entryIx];
+               assertEquals(curEntry.productId, reader.getProductId(curDocId));
+               assertEquals(curEntry.score, reader.getReviewScore(curDocId));
+               assertEquals(curEntry.helpfulnessNumerator, reader.getReviewHelpfulnessNumerator(curDocId));
+               assertEquals(curEntry.helpfulnessDenominator, reader.getReviewHelpfulnessDenominator(curDocId));
+               assertEquals(curEntry.tokens.length, reader.getReviewLength(curDocId));
+           }
        }
 
        for (var tokenAndPosting: expected.termToPostings.entrySet()) {
