@@ -33,6 +33,6 @@ class TokenizerTest {
         String[] expectedTokens = new String[] {
                 "שלום", "עולם", "זה", "טקסט"
         };
-        assertArrayEquals(Tokenizer.tokenize(input, true), expectedTokens);
+        assertArrayEquals(Tokenizer.tokenize(input), expectedTokens);
     }
 }
