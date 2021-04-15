@@ -3,10 +3,9 @@ package webdata.inverted_index;
 import webdata.compression.GroupVarintEncoder;
 
 import java.io.*;
-import java.nio.channels.FileChannel;
 import java.util.Objects;
 
-/** Used for writing posting lists */
+/** Used for writing posting lists.*/
 public class PostingListWriter implements Closeable, Flushable {
 
     private final GroupVarintEncoder encoder;
@@ -17,6 +16,11 @@ public class PostingListWriter implements Closeable, Flushable {
     private int curDocumentFrequency;
     private int curPostingPtr;
 
+    /**
+     * Creates a writer for posting lists
+     * @param outputStream Output stream to which encoded posting entries will be written.
+     *                     Will be automatically closed/flushed when the PostingListWriter is closed/flushed, respectively.
+     */
     public PostingListWriter(OutputStream outputStream) {
         this.encoder = new GroupVarintEncoder(outputStream);
         this.curBytePos = 0;
@@ -84,11 +88,18 @@ public class PostingListWriter implements Closeable, Flushable {
 
     @Override
     public void close() throws IOException {
+        flush();
         this.encoder.close();
     }
 
     @Override
     public void flush() throws IOException {
         this.encoder.flush();
+    }
+
+    /** Similar to {@link #flush()}, ensures all (compressed) posting list entries are written to
+     *  the output stream without flushing the stream itself. */
+    public void flushEncoderOnly() throws IOException {
+        this.encoder.finishPreviousGroup();
     }
 }

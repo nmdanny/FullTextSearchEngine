@@ -107,7 +107,8 @@ public class GroupVarintEncoder extends OutputStream {
 
 //    private static final byte[] ALL_ZEROS = new byte[]{0, 0, 0, 0, 0};
 
-    /** Writes the current group(if any) into the stream
+    /** Writes the current group(if any) into the stream. This is similar to the {@link #flush()} method,
+     *  except that the underlying stream is not flushed.
      * @throws IOException In case of IO error
      */
     public void finishPreviousGroup() throws IOException
@@ -133,6 +134,10 @@ public class GroupVarintEncoder extends OutputStream {
         outputStream.close();
     }
 
+    /** Creates a group varint encoder over a given stream
+     * @param outputStream Stream where encoded integers will be written to. Will be flushed/closed
+     *                     whenever the GroupVarintEncoder is flushed/closed, respectively.
+     */
     public GroupVarintEncoder(OutputStream outputStream)
     {
         this.outputStream = outputStream;

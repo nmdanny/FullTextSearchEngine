@@ -26,6 +26,17 @@ public class GroupVarintDecoder extends InputStream {
         this.posInGroup = -1;
     }
 
+    /** Resets the state of the decoder, allowing treating the current position within the input stream as a new group.
+     *
+     * Note that while it's possible to reset the decoder in the middle of a group, any numbers which weren't read
+     * will be lost - it's the caller's responsibility to ensure all numbers in the group(which aren't 0)
+     * were exhausted beforehand.
+     */
+    @Override
+    public void reset() throws IOException {
+        this.posInGroup = -1;
+    }
+
     // Tries to read a group of numbers, returns whether the read succeeded.
     private boolean readNextGroup() throws IOException {
 
