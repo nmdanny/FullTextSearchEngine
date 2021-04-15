@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -173,4 +175,26 @@ public class Utils {
 
     }
 
+    /** Drains all minimal elements from the given queue.
+     */
+    public static <T> Stream<T> getMinElements(PriorityQueue<T> queue) {
+        if (queue.isEmpty()) {
+            return Stream.empty();
+        }
+
+        T min = queue.peek();
+        var comparator = queue.comparator();
+        if (comparator == null) {
+            // this is an unchecked cast, but any priority queue of elements with
+            // no custom comparator, must have a natural order.
+            comparator = (Comparator<? super T>)Comparator.naturalOrder();
+
+        }
+
+        Comparator<? super T> finalComparator = comparator;
+        return Stream.generate(queue::peek)
+                .takeWhile(t -> t != null && finalComparator.compare(min, t) == 0)
+                .peek(t -> { queue.poll(); });
+
+    }
 }

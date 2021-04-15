@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 
 /** Allows building a dictionary into disk in a sequential manner, by adding terms and their occurrences (sorted by
  *  terms and docIds), though they don't have to be in memory. */
-public class SequentialDictionaryBuilder implements Closeable, Flushable {
+public class SequentialDictionaryBuilder implements Closeable, Flushable, DictionaryBuilder {
 
     private final String dir;
     private final DataOutputStream elementsDos;
@@ -48,9 +48,10 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable {
     }
 
     /** Begins a new term */
+    @Override
     public void beginTerm(String term) throws IOException {
         assert !term.isEmpty() : "Terms should not be empty";
-        if (postingListWriter.getCurrentTerm() != null && postingListWriter.getCurrentTerm().compareTo(term) >= 0)
+        if (postingListWriter.getCurrentTerm() != null && postingListWriter.getCurrentTerm().compareTo(term) > 0)
         {
             throw new IllegalArgumentException("Terms must be written into dictionary in lexicographically increasing order");
         }
@@ -60,6 +61,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable {
         curTermPostingPtr = postingListWriter.startTerm(term);
     }
 
+    @Override
     public void endTerm() throws IOException {
         if (curTerm == null) {
             return;
@@ -99,6 +101,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable {
 
     }
 
+    @Override
     public void addTermOccurence(int docId, int freqInDoc) throws IOException {
         totalNumberOfTokens += freqInDoc;
         postingListWriter.add(docId, freqInDoc);
