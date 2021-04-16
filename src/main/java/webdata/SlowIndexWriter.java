@@ -1,10 +1,10 @@
 package webdata;
 
-import webdata.dictionary.InMemoryDictionaryBuilder;
+import webdata.dictionary.InMemoryIndexer;
 import webdata.dictionary.SequentialDictionaryBuilder;
 import webdata.parsing.ParallelReviewParser;
 import webdata.parsing.Review;
-import webdata.spimi.SPIMIDictionaryBuilder;
+import webdata.spimi.SPIMIIndexer;
 import webdata.storage.CompactReview;
 import webdata.storage.ProductIdToDocIdMapper;
 import webdata.storage.ReviewStorage;
@@ -26,7 +26,7 @@ public class SlowIndexWriter {
 			Files.createDirectories(Path.of(dir));
 			Charset inputFileCharset = StandardCharsets.ISO_8859_1;
 
-			var dictionaryBuilder = new SPIMIDictionaryBuilder(Path.of(dir));
+			var indexer = new SPIMIIndexer(Path.of(dir));
 			try (var storage = ReviewStorage.inDirectory(dir);
 				 var mapper = new ProductIdToDocIdMapper(dir, storage)) {
 
@@ -44,7 +44,7 @@ public class SlowIndexWriter {
 							storage.add(new CompactReview(review));
 						})
 						.flatMap(Review::tokens);
-				dictionaryBuilder.processTokens(stream);
+				indexer.processTokens(stream);
 			}
 		} catch (IOException ex) {
 
@@ -69,7 +69,7 @@ public class SlowIndexWriter {
 				 var storage = ReviewStorage.inDirectory(dir);
 				 var mapper = new ProductIdToDocIdMapper(dir, storage))
 			{
-				var dictBuilder = new InMemoryDictionaryBuilder(seqDictBuilder);
+				var dictBuilder = new InMemoryIndexer(seqDictBuilder);
 				int bufSize = 1 << 16;
 				int numBufs = 4;
 				var parser = new ParallelReviewParser(bufSize, numBufs, inputFileCharset);

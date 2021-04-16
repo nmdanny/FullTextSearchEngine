@@ -1,12 +1,9 @@
 package webdata.dictionary;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -29,10 +26,10 @@ public class DictionaryTest {
         tempDir = Files.createTempDirectory("canCreateSmallDictionary");
         var seqDictBuilder = new SequentialDictionaryBuilder(tempDir.toString());
 
-        var dictionaryBuilder = new InMemoryDictionaryBuilder(seqDictBuilder);
-        dictionaryBuilder.processDocument(1, "שרה שרה שיר שמח שיר שמח שרה שרה test");
-        dictionaryBuilder.processDocument(2, "גנן גידל דגן בגן, דגן גדול גדל בגן test");
-        dictionaryBuilder.finish();
+        var indexer = new InMemoryIndexer(seqDictBuilder);
+        indexer.processDocument(1, "שרה שרה שיר שמח שיר שמח שרה שרה test");
+        indexer.processDocument(2, "גנן גידל דגן בגן, דגן גדול גדל בגן test");
+        indexer.finish();
 
         dict = new Dictionary(tempDir.toString());
 

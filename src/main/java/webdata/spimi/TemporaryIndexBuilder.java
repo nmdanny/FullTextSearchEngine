@@ -7,10 +7,10 @@ import java.util.*;
 
 
 /** An in-memory index builder for creating temporary index files. */
-public class SPIMIInverter {
+public class TemporaryIndexBuilder {
     private final TreeMap<String, ArrayList<DocAndFreq>> dictionary;
 
-    public SPIMIInverter() {
+    public TemporaryIndexBuilder() {
         dictionary = new TreeMap<>();
     }
 

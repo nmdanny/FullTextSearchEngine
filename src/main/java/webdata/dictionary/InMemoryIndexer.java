@@ -15,11 +15,11 @@ class TermOccurrence {
 
 /** Used to fill a dictionary from a list of documents within memory. Every seen token is kept in memory
  *  until we actually fill the dictionary. */
-public class InMemoryDictionaryBuilder {
+public class InMemoryIndexer {
     private final ArrayList<TermOccurrence> occurrences;
     private final SequentialDictionaryBuilder dictionaryBuilder;
 
-    public InMemoryDictionaryBuilder(SequentialDictionaryBuilder dictionaryBuilder) {
+    public InMemoryIndexer(SequentialDictionaryBuilder dictionaryBuilder) {
         this.occurrences = new ArrayList<>();
         this.dictionaryBuilder = dictionaryBuilder;
     }

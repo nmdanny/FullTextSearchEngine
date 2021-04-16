@@ -10,12 +10,12 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class SPIMIInverterTest {
+class TemporaryIndexBuilderTest {
 
     @Test
     void invert() throws IOException  {
         var os = new ByteArrayOutputStream();
-        var spimi = new SPIMIInverter();
+        var spimi = new TemporaryIndexBuilder();
 
         var tokens = Stream.of(
                 new Token("hello", 1, 3),
