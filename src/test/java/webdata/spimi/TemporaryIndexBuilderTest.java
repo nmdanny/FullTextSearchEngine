@@ -1,6 +1,8 @@
 package webdata.spimi;
 
 import org.junit.jupiter.api.Test;
+import webdata.DocAndFreq;
+import webdata.Token;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

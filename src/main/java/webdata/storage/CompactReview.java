@@ -42,8 +42,8 @@ public class CompactReview implements Comparable<CompactReview> {
         this.helpfulnessNumerator = (short)parsedReview.getHelpfulnessNumerator();
         this.helpfulnessDenominator = (short)parsedReview.getHelpfulnessDenominator();
         this.score = (byte)parsedReview.getScore();
-        assert (parsedReview.getTokens().length <= Short.MAX_VALUE) : "Number of reviews in token must be less than 2^15 ";
-        this.numTokens = (short)parsedReview.getTokens().length;
+        assert (parsedReview.getTotalNumberOfTokens() <= Short.MAX_VALUE) : "Number of reviews in token must be less than 2^15 ";
+        this.numTokens = (short)parsedReview.getTotalNumberOfTokens();
     }
 
 

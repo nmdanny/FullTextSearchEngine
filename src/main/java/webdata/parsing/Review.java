@@ -1,10 +1,10 @@
 package webdata.parsing;
 
-import webdata.spimi.Token;
+import webdata.Token;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -20,7 +20,8 @@ public class Review {
     private int helpfulnessNumerator;
     private int helpfulnessDenominator;
     private int score;
-    private String[] tokens;
+    private int totalNumberOfTokens;
+    private Map<String, Long> tokenToFreq;
 
     public static Review fromFields(HashMap<String, String> fields) {
         String productId = fields.getOrDefault("productId", "").toLowerCase();
@@ -89,8 +90,13 @@ public class Review {
         review.helpfulnessNumerator = helpfulnessNumerator;
         review.helpfulnessDenominator = helpfulnessDenominator;
         review.score = scoreInt;
-        review.tokens = Tokenizer.tokenize(text);
 
+        int[] totalNumberOfTokens = new int[]{0};
+        review.tokenToFreq = Tokenizer.tokensAsStream(text)
+                .peek(_term -> totalNumberOfTokens[0] += 1)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        review.totalNumberOfTokens = totalNumberOfTokens[0];
         return review;
     }
 
@@ -124,15 +130,11 @@ public class Review {
         return score;
     }
 
-    public String[] getTokens() {
-        return tokens;
-    }
+    public int getTotalNumberOfTokens() { return totalNumberOfTokens; }
 
-    public Stream<Token> tokens() {
-        var tokToFreq = Arrays.stream(tokens)
-                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-
-        return tokToFreq.entrySet()
+    public Stream<Token> uniqueTokens() {
+        assert docId >= 0 : "Must be called after docID was set";
+        return this.tokenToFreq.entrySet()
                 .stream()
                 .map(entry -> new Token(entry.getKey(), getDocId(), entry.getValue().intValue()));
     }
@@ -142,24 +144,11 @@ public class Review {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Review review = (Review) o;
-        return helpfulnessNumerator == review.helpfulnessNumerator && helpfulnessDenominator == review.helpfulnessDenominator && score == review.score && productId.equals(review.productId) && Arrays.equals(tokens, review.tokens);
+        return docId == review.docId && helpfulnessNumerator == review.helpfulnessNumerator && helpfulnessDenominator == review.helpfulnessDenominator && score == review.score && totalNumberOfTokens == review.totalNumberOfTokens && productId.equals(review.productId) && tokenToFreq.equals(review.tokenToFreq);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(productId, helpfulnessNumerator, helpfulnessDenominator, score);
-        result = 31 * result + Arrays.hashCode(tokens);
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "Review{" +
-                "productId='" + productId + '\'' +
-                ", helpfulnessNumerator=" + helpfulnessNumerator +
-                ", helpfulnessDenominator=" + helpfulnessDenominator +
-                ", score=" + score +
-                ", tokens=" + Arrays.toString(tokens) +
-                '}';
+        return Objects.hash(docId, productId, helpfulnessNumerator, helpfulnessDenominator, score, totalNumberOfTokens, tokenToFreq);
     }
 }

@@ -1,5 +1,6 @@
 package webdata.spimi;
 
+import webdata.DocAndFreq;
 import webdata.compression.GroupVarintDecoder;
 
 import java.io.DataInputStream;

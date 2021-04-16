@@ -1,7 +1,10 @@
-package webdata.spimi;
+package webdata;
 
 import java.util.Objects;
 
+/** Tuple representing posting list element.
+ *  Contains a document ID and frequency of term within that document.
+ */
 public class DocAndFreq {
     private final int docID;
     private final int docFrequency;

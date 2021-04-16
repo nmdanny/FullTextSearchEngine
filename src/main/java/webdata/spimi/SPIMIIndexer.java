@@ -1,5 +1,7 @@
 package webdata.spimi;
 
+import webdata.Token;
+
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;

@@ -2,6 +2,8 @@ package webdata.spimi;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+
+import webdata.DocAndFreq;
 import webdata.dictionary.DictionaryBuilder;
 
 import java.io.IOException;

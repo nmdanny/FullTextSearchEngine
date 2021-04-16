@@ -1,7 +1,5 @@
 package webdata;
 
-import webdata.dictionary.InMemoryIndexer;
-import webdata.dictionary.SequentialDictionaryBuilder;
 import webdata.parsing.ParallelReviewParser;
 import webdata.parsing.Review;
 import webdata.spimi.SPIMIIndexer;
@@ -19,7 +17,12 @@ import java.util.Comparator;
 
 public class SlowIndexWriter {
 
-
+	/**
+	 * Given product review data, creates an on disk index
+	 * inputFile is the path to the file containing the review data
+	 * dir is the directory in which all index files will be created
+	 * if the directory does not exist, it should be created
+	 */
 	public void slowWrite(String inputFile, String dir) {
 		try {
 			removeIndex(dir);
@@ -43,60 +46,11 @@ public class SlowIndexWriter {
 							docId[0] += 1;
 							storage.add(new CompactReview(review));
 						})
-						.flatMap(Review::tokens);
+						.flatMap(Review::uniqueTokens);
 				indexer.processTokens(stream);
 			}
 		} catch (IOException ex) {
-
-		}
-	}
-
-	/**
-	* Given product review data, creates an on disk index
-	* inputFile is the path to the file containing the review data
-	* dir is the directory in which all index files will be created
-	* if the directory does not exist, it should be created
-	*/
-	public void slowWriteSlow(String inputFile, String dir) {
-		try {
-			removeIndex(dir);
-			Files.createDirectories(Path.of(dir));
-
-			Charset inputFileCharset = StandardCharsets.ISO_8859_1;
-
-
-			try (var seqDictBuilder = new SequentialDictionaryBuilder(dir);
-				 var storage = ReviewStorage.inDirectory(dir);
-				 var mapper = new ProductIdToDocIdMapper(dir, storage))
-			{
-				var dictBuilder = new InMemoryIndexer(seqDictBuilder);
-				int bufSize = 1 << 16;
-				int numBufs = 4;
-				var parser = new ParallelReviewParser(bufSize, numBufs, inputFileCharset);
-
-				final int[] docId = {1};
-
-				parser.parse(inputFile)
-								.sequential()
-								.peek(review -> {
-									review.assignDocId(docId[0]);
-									dictBuilder.processDocument(review.getDocId(), review.getTokens());
-									docId[0] += 1;
-									storage.add(new CompactReview(review));
-								})
-								.sorted(Comparator.comparing(Review::getProductId).thenComparing(Review::getDocId))
-								.forEachOrdered(review -> {
-									mapper.observeProduct(review.getProductId(), review.getDocId());
-								});
-
-
-				storage.flush();
-				dictBuilder.finish();
-			}
-
-
-		} catch (IOException ex) {
-			System.err.println("IO exception while creating dictionary: " + ex);
+			System.err.println("Got IO exception during slowWrite: " + ex);
 		}
 	}
 

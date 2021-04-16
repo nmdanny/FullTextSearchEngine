@@ -1,5 +1,6 @@
 package webdata.spimi;
 
+import webdata.DocAndFreq;
 import webdata.Utils;
 import webdata.dictionary.DictionaryBuilder;
 import webdata.dictionary.SequentialDictionaryBuilder;

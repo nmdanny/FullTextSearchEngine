@@ -1,5 +1,7 @@
 package webdata.spimi;
 
+import webdata.DocAndFreq;
+
 import java.io.IOException;
 import java.util.Iterator;
 

@@ -1,4 +1,4 @@
-package webdata.spimi;
+package webdata;
 
 /** Represents a token */
 public class Token {
