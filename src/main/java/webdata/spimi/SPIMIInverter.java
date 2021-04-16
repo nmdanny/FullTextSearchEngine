@@ -51,9 +51,8 @@ public class SPIMIInverter {
                 for (var docFreq: list) {
                     writer.add(docFreq.getDocID(), docFreq.getDocFrequency());
                 }
-                // flush the writer to ensure bytes are written to the DataOutputStream,
-                // so they won't be mixed up with
-                // Don't flush the stream itself as that might not be efficient
+                // flush the writer to ensure posting list bytes are written to the DataOutputStream
+                // and won't be mixed with ones from the data output stream next iteration
                 writer.flushEncoderOnly();
             }
        }

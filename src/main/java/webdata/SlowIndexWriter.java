@@ -4,6 +4,7 @@ import webdata.dictionary.InMemoryDictionaryBuilder;
 import webdata.dictionary.SequentialDictionaryBuilder;
 import webdata.parsing.ParallelReviewParser;
 import webdata.parsing.Review;
+import webdata.spimi.SPIMIDictionaryBuilder;
 import webdata.storage.CompactReview;
 import webdata.storage.ProductIdToDocIdMapper;
 import webdata.storage.ReviewStorage;
@@ -18,13 +19,45 @@ import java.util.Comparator;
 
 public class SlowIndexWriter {
 
+
+	public void slowWrite(String inputFile, String dir) {
+		try {
+			removeIndex(dir);
+			Files.createDirectories(Path.of(dir));
+			Charset inputFileCharset = StandardCharsets.ISO_8859_1;
+
+			var dictionaryBuilder = new SPIMIDictionaryBuilder(Path.of(dir));
+			try (var storage = ReviewStorage.inDirectory(dir);
+				 var mapper = new ProductIdToDocIdMapper(dir, storage)) {
+
+				int bufSize = 1 << 16;
+				int numBufs = 4;
+				var parser = new ParallelReviewParser(bufSize, numBufs, inputFileCharset);
+
+				final int[] docId = {1};
+
+				var stream = parser.parse(inputFile)
+						.sequential()
+						.peek(review -> {
+							review.assignDocId(docId[0]);
+							docId[0] += 1;
+							storage.add(new CompactReview(review));
+						})
+						.flatMap(Review::tokens);
+				dictionaryBuilder.processTokens(stream);
+			}
+		} catch (IOException ex) {
+
+		}
+	}
+
 	/**
 	* Given product review data, creates an on disk index
 	* inputFile is the path to the file containing the review data
 	* dir is the directory in which all index files will be created
 	* if the directory does not exist, it should be created
 	*/
-	public void slowWrite(String inputFile, String dir) {
+	public void slowWriteSlow(String inputFile, String dir) {
 		try {
 			removeIndex(dir);
 			Files.createDirectories(Path.of(dir));

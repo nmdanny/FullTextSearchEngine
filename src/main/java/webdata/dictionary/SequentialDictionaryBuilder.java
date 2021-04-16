@@ -109,6 +109,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
 
     @Override
     public void close() throws IOException {
+        endTerm();
         flush();
         postingListWriter.close();
         encoder.close();

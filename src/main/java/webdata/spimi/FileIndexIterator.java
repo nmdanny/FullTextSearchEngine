@@ -30,13 +30,6 @@ public class FileIndexIterator implements IndexIterator {
         moveToNextPostingList();
     }
 
-    /**
-     * Tries resetting the iterator for reading the next posting list, assuming it is positioned at the beginning of
-     * a posting list's metadata
-     *
-     * @return True if there's more input, false otherwise.
-     * @throws IOException In case reading the metadata fails
-     */
     @Override
     public boolean moveToNextPostingList() throws IOException {
         if (dis.available() == 0) {

@@ -1,9 +1,14 @@
 package webdata.parsing;
 
+import webdata.spimi.Token;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /** Represents a parsed review */
 public class Review {
@@ -121,6 +126,15 @@ public class Review {
 
     public String[] getTokens() {
         return tokens;
+    }
+
+    public Stream<Token> tokens() {
+        var tokToFreq = Arrays.stream(tokens)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        return tokToFreq.entrySet()
+                .stream()
+                .map(entry -> new Token(entry.getKey(), getDocId(), entry.getValue().intValue()));
     }
 
     @Override
