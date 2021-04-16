@@ -16,33 +16,32 @@ public class SPIMIIndexer {
     private final TemporaryIndexBuilder temporaryIndexBuilder;
     private final Path dir;
     private static final String TEMP_INDEX_DIR = "temp_indices";
-    private int numBlocks;
 
     public SPIMIIndexer(Path dir) throws IOException {
         this.dir = dir;
         this.temporaryIndexBuilder = new TemporaryIndexBuilder();
-        this.numBlocks = 0;
 
         Files.createDirectories(dir.resolve(TEMP_INDEX_DIR));
 
     }
 
     private String pathForBlock(int blockNum) {
-        return dir.resolve(TEMP_INDEX_DIR).resolve("tempIndex" + numBlocks + ".bin").toString();
+        return dir.resolve(TEMP_INDEX_DIR).resolve("tempIndex" + blockNum + ".bin").toString();
     }
 
     public void processTokens(Stream<Token> tokens) throws IOException {
         var it = tokens.iterator();
 
+        int numBlocks = 0;
         while (it.hasNext()) {
             ++numBlocks;
             String tempIndexPath = pathForBlock(numBlocks);
             try (var os = new BufferedOutputStream(new FileOutputStream(tempIndexPath, false))) {
                 temporaryIndexBuilder.invert(it, os);
-                var filePaths = IntStream.rangeClosed(1, numBlocks)
-                        .mapToObj(this::pathForBlock).collect(Collectors.toList());
-                Merger.merge(dir.toString(), filePaths);
             }
         }
+        var filePaths = IntStream.rangeClosed(1, numBlocks)
+                .mapToObj(this::pathForBlock).collect(Collectors.toList());
+        Merger.merge(dir.toString(), filePaths);
     }
 }
