@@ -1,6 +1,7 @@
 package webdata.spimi;
 
 import webdata.Token;
+import webdata.Utils;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -34,16 +35,19 @@ public class SPIMIIndexer {
     public void processTokens(Stream<Token> tokens) throws IOException {
         var it = tokens.iterator();
 
-        int numBlocks = 0;
+        int numIndices = 0;
         while (it.hasNext()) {
-            ++numBlocks;
-            String tempIndexPath = pathForBlock(numBlocks);
+            ++numIndices;
+            String tempIndexPath = pathForBlock(numIndices);
+            Utils.log("Creating temporary index number %d", numIndices);
             try (var os = new BufferedOutputStream(new FileOutputStream(tempIndexPath, false))) {
                 temporaryIndexBuilder.invert(it, os);
             }
         }
-        var filePaths = IntStream.rangeClosed(1, numBlocks)
+        var filePaths = IntStream.rangeClosed(1, numIndices)
                 .mapToObj(this::pathForBlock).collect(Collectors.toList());
+        Utils.log("Merging final index from %d temporary indices", numIndices);
         Merger.merge(dir.toString(), filePaths);
+        Utils.log("Finished creating final index");
     }
 }

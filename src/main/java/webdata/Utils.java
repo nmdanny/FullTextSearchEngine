@@ -5,14 +5,19 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class Utils {
 
+    public static void log(String format, Object... args)
+    {
+        System.out.format(
+                "[" + new SimpleDateFormat("HH:mm.ss").format(new Date()) + "] " +
+                        format + "\n", args);
+    }
 
     public static <T> int binarySearchLeftmost(List<? extends Comparable<? super T>> list, T target) {
         int low = 0;
