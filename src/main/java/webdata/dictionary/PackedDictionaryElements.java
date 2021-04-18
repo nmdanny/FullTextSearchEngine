@@ -2,6 +2,9 @@ package webdata.dictionary;
 
 import java.io.*;
 import java.util.AbstractList;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
 
 
 /** A packed list of dictionary elements in memory, allowing readonly list operations */
@@ -83,5 +86,36 @@ class PackedDictionaryElements extends AbstractList<DictionaryElement> {
     @Override
     public int size() {
         return numFirstBlockElement + numOtherBlockElement;
+    }
+
+    /** A spliterator over all elements in this dictionary */
+    public Spliterator<DictionaryElement> dictionaryElementsSpliterator() {
+        long numElements = size();
+        int characteristics = Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.SIZED;
+        return new Spliterators.AbstractSpliterator<DictionaryElement>(numElements, characteristics) {
+            int elemIx = 0;
+            final ByteArrayInputStream bais = new ByteArrayInputStream(packedBytes);
+            final DataInputStream dis = new DataInputStream(bais);
+
+            @Override
+            public boolean tryAdvance(Consumer<? super DictionaryElement> action) {
+                if (elemIx >= numElements) {
+                    return false;
+                }
+                try {
+                    DictionaryElement element;
+                    if (elemIx % Dictionary.BLOCK_SIZE == 0) {
+                        element = FirstBlockElement.deserialize(dis);
+                    } else {
+                        element = OtherBlockElement.deserialize(dis);
+                    }
+                    action.accept(element);
+                    ++elemIx;
+                    return true;
+                } catch (IOException ex) {
+                    throw new RuntimeException("Impossible, IO exception dealing with in memory byte array", ex);
+                }
+            }
+        };
     }
 }

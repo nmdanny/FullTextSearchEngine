@@ -2,15 +2,15 @@ package webdata.dictionary;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import webdata.Token;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,6 +19,8 @@ public class DictionaryTest {
     Path tempDir;
     Dictionary dict;
     Object[][] termAndDocumentFreq;
+
+    Map<Integer, Object[][]> docIdToDoc;
 
 
     @BeforeEach
@@ -46,6 +48,24 @@ public class DictionaryTest {
                 {"שמח", 1}, // FBE, err
                 {"שרה", 1},
         };
+
+        docIdToDoc = Map.of(
+                1, new Object[][] {
+                        {"test", 1},
+                        {"שיר", 2},
+                        {"שמח", 2},
+                        {"שרה", 4},
+                },
+                2, new Object[][] {
+                        {"test", 1},
+                        {"גנן",  1},
+                        {"גידל",  1},
+                        {"דגן",  2},
+                        {"בגן",  2},
+                        {"גדול",  1},
+                        {"גדל",  1},
+                }
+        );
     }
 
     @Test
@@ -94,21 +114,6 @@ public class DictionaryTest {
         Iterable<Integer> testIterable = () -> testIt;
         assertIterableEquals(List.of(1, 1, 2, 1), testIterable);
 
-        var docIdToDoc = Map.of(
-                1, new Object[][] {
-                        {"שיר", 2},
-                        {"שמח", 2},
-                        {"שרה", 4},
-                },
-                2, new Object[][] {
-                        {"גנן",  1},
-                        {"גידל",  1},
-                        {"דגן",  2},
-                        {"בגן",  2},
-                        {"גדול",  1},
-                        {"גדל",  1},
-                }
-        );
 
         // checking terms that only appear in one of the documents
         for (var entries: docIdToDoc.entrySet()) {
@@ -117,12 +122,45 @@ public class DictionaryTest {
             for (var termAndFreq: doc) {
                 var expectedTerm = (String)termAndFreq[0];
                 var expectedFreq = (int)termAndFreq[1];
+                if (expectedTerm.equals("test")) {
+                    continue;
+                }
                 var it = dict.getDocIdsAndFreqs(dict.getIndexOfToken(expectedTerm)).asIterator();
                 Iterable<Integer> iterable = () -> it;
                 assertIterableEquals(List.of(docId, expectedFreq), iterable, "while checking " + termAndFreq[0]);
             }
         }
 
+    }
+
+    @Test
+    void canIterateTerms() {
+        var split = dict.terms();
+        var terms = StreamSupport.stream(split, false)
+                .collect(Collectors.toList());
+        var expectedTerms = Arrays.stream(this.termAndDocumentFreq)
+                .map(arr -> new AbstractMap.SimpleEntry<>((String) arr[0], (Integer)arr[1]))
+                .sorted(Map.Entry.comparingByKey())
+                .collect(Collectors.toList());
+        assertIterableEquals(expectedTerms, terms);
+    }
+
+    @Test
+    void canIterateTokens() throws IOException {
+        var tokens = StreamSupport.stream(dict.tokens(), false)
+                .collect(Collectors.toList());
+        var expectedTerms = docIdToDoc.entrySet()
+                .stream()
+                .flatMap(entry -> {
+                    var docId = entry.getKey();
+                    return Arrays.stream(entry.getValue())
+                            .map(pair -> {
+                                return new Token((String)pair[0], docId, (Integer)pair[1]);
+                            });
+                })
+                .sorted(Comparator.comparing(Token::getTerm).thenComparing(Token::getDocID))
+                .collect(Collectors.toList());
+        assertIterableEquals(expectedTerms, tokens);
     }
 
 }

@@ -1,5 +1,7 @@
 package webdata;
 
+import java.util.Objects;
+
 /** Represents a token */
 public class Token {
     private final String term;
@@ -30,5 +32,27 @@ public class Token {
 
     public DocAndFreq toDocAndFreq() {
         return new DocAndFreq(docID, docFrequency);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Token token = (Token) o;
+        return docID == token.docID && docFrequency == token.docFrequency && term.equals(token.term);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(term, docID, docFrequency);
+    }
+
+    @Override
+    public String toString() {
+        return "Token{" +
+                "term='" + term + '\'' +
+                ", docID=" + docID +
+                ", docFrequency=" + docFrequency +
+                '}';
     }
 }

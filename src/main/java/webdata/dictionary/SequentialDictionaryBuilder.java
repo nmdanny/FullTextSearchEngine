@@ -22,6 +22,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
     private int curTermPostingPtr;
     private int totalNumberOfTokens;
     private int uniqueNumberOfTokens;
+    private int numberDocIdFreqPairs;
 
     public SequentialDictionaryBuilder(String dir) throws IOException {
         this.dir = dir;
@@ -31,6 +32,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
         Files.createDirectories(Paths.get(dir));
         this.totalNumberOfTokens = 0;
         this.uniqueNumberOfTokens = 0;
+        this.numberDocIdFreqPairs = 0;
 
 
         var elementsFos = new FileOutputStream(Paths.get(dir, Dictionary.DICTIONARY_FILE_NAME).toString(), false);
@@ -105,6 +107,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
     public void addTermOccurence(int docId, int freqInDoc) throws IOException {
         totalNumberOfTokens += freqInDoc;
         postingListWriter.add(docId, freqInDoc);
+        ++numberDocIdFreqPairs;
     }
 
     @Override
@@ -127,6 +130,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
              var statsOs = new DataOutputStream(statsFos)) {
             statsOs.writeInt(totalNumberOfTokens);
             statsOs.writeInt(uniqueNumberOfTokens);
+            statsOs.writeInt(numberDocIdFreqPairs);
             statsOs.flush();
         }
     }

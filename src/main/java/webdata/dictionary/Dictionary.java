@@ -1,8 +1,10 @@
 package webdata.dictionary;
 
+import webdata.Token;
 import webdata.Utils;
 import webdata.compression.FrontCodingDecoder;
 import webdata.compression.FrontCodingResult;
+import webdata.compression.GroupVarintDecoder;
 import webdata.inverted_index.PostingListReader;
 
 import java.io.*;
@@ -11,7 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.IntStream;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /** Contains the in memory dictionary, allowing querying it */
@@ -43,6 +45,7 @@ public class Dictionary {
 
     private int totalNumberOfTokens;
     private int uniqueNumberOfTokens;
+    private int numberDocIdFreqPairs;
 
     /**
      * @param dir Directory of index files
@@ -70,7 +73,10 @@ public class Dictionary {
         // read constant statistics
         totalNumberOfTokens = statsIs.readInt();
         uniqueNumberOfTokens = statsIs.readInt();
+        numberDocIdFreqPairs = statsIs.readInt();
         assert uniqueNumberOfTokens <= totalNumberOfTokens;
+        assert numberDocIdFreqPairs >= uniqueNumberOfTokens;
+        assert numberDocIdFreqPairs <= totalNumberOfTokens;
         elements = new PackedDictionaryElements(elementsIs, uniqueNumberOfTokens);
     }
 
@@ -189,8 +195,123 @@ public class Dictionary {
         return uniqueNumberOfTokens;
     }
 
-    /** Returns a stream of all different tokens in the dictionary, sorted lexicographically */
-    public Stream<String> getTokens() {
-        return IntStream.range(0, elements.size()).mapToObj(this::getTerm);
+    /** Returns a spliterator over all terms in the dictionary along with their document frequencies,
+     *  lexicographically ordered. */
+    public Spliterator<Map.Entry<String, Integer>> terms() {
+        int sizeHint = uniqueNumberOfTokens;
+        int characteristics = Spliterator.SIZED | Spliterator.NONNULL | Spliterator.ORDERED | Spliterator.DISTINCT;
+
+        return new Spliterators.AbstractSpliterator<>(sizeHint, characteristics) {
+            int dictIndex = 0;
+            String curPrefix = null;
+            int curSuffixPos = 0;
+            final Spliterator<DictionaryElement> dictElements = elements.dictionaryElementsSpliterator();
+
+            final FrontCodingDecoder decoder = new FrontCodingDecoder(
+                    Dictionary.BLOCK_SIZE,
+                    Dictionary.TERMS_FILE_ENCODING,
+                    new ByteArrayInputStream(termsBuf)
+            );
+
+            @Override
+            public boolean tryAdvance(Consumer<? super Map.Entry<String, Integer>> action) {
+                return dictElements.tryAdvance(element -> {
+                    try {
+                        if (dictIndex % BLOCK_SIZE == 0) {
+                            var firstBlockElement = (FirstBlockElement)element;
+                            var frontCodingResult = new FrontCodingResult(
+                                    firstBlockElement.suffixPos,
+                                    0,
+                                    firstBlockElement.suffixLength
+                            );
+                            curSuffixPos = firstBlockElement.suffixPos + firstBlockElement.suffixLength;
+                            curPrefix = decoder.decodeElement(frontCodingResult);
+                        } else {
+                            var otherBlockElement = (OtherBlockElement)element;
+                            var frontCodingResult = new FrontCodingResult(
+                                    curSuffixPos,
+                                    otherBlockElement.prefixLength,
+                                    otherBlockElement.suffixLength
+                            );
+                            curSuffixPos += frontCodingResult.suffixLengthBytes;
+                            curPrefix = decoder.decodeElement(frontCodingResult);
+                        }
+                        action.accept(new AbstractMap.SimpleEntry<>(curPrefix, element.getTokenFrequency()));
+                        ++dictIndex;
+                    } catch (IOException ex) {
+                        throw new RuntimeException("Impossible, IO error dealing with byte arrays", ex);
+                    }
+                });
+            }
+        };
+    }
+
+    /** Returns a spliterator over all tokens in the dictionary, sorted by terms, followed by docIDs */
+    public Spliterator<Token> tokens() throws IOException {
+        int sizeHint = numberDocIdFreqPairs;
+        int characteristics = Spliterator.SIZED | Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.DISTINCT;
+
+        return new Spliterators.AbstractSpliterator<Token>(sizeHint, characteristics) {
+
+
+            final Spliterator<Map.Entry<String, Integer>> termSpliterator = terms();
+            final InputStream postings = new BufferedInputStream(new FileInputStream(
+                Path.of(dir, POSTINGS_FILE_NAME).toString()
+            ));
+            final GroupVarintDecoder decoder = new GroupVarintDecoder(postings);
+
+            int curFrequency = 0;
+            String currentTerm = null;
+            int postingListIndex = 0;
+            int lastDocID = 0;
+            boolean closed = false;
+
+            private void close() throws IOException {
+                postings.close();
+                decoder.close();
+                closed = true;
+            }
+
+            @Override
+            public boolean tryAdvance(Consumer<? super Token> action) {
+                try {
+                    if (postingListIndex >= curFrequency) {
+                        // advance to next term
+                        var hasMoreTerms = termSpliterator.tryAdvance(newTermFreq -> {
+                            currentTerm = newTermFreq.getKey();
+                            curFrequency = newTermFreq.getValue();
+                            postingListIndex = 0;
+                            assert curFrequency >= 1;
+                            try {
+                                // there might be multiple zeros
+                                do {
+                                    lastDocID = decoder.read();
+                                } while (lastDocID == 0);
+                                var freqInDoc = decoder.read();
+                                action.accept(new Token(currentTerm, lastDocID, freqInDoc));
+                                ++postingListIndex;
+                            } catch (IOException e) {
+                                throw new RuntimeException("Got IO exception while dealing with posting list", e);
+                            }
+                        });
+                        if (!hasMoreTerms && !closed) {
+                            close();
+                        }
+                        return hasMoreTerms;
+                    } else {
+                        // advance to next posting list entry
+                        int gap = decoder.read();
+                        assert gap > 0;
+                        lastDocID += gap;
+                        var freqInDoc = decoder.read();
+                        action.accept(new Token(currentTerm, lastDocID, freqInDoc));
+                        ++postingListIndex;
+                        return true;
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException("Got IO exception while dealing with posting list", e);
+                }
+            }
+        };
     }
 }
