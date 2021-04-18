@@ -1,8 +1,13 @@
 package webdata.storage;
 
+import webdata.sorting.ExternalSorter;
+
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.AbstractList;
 import java.util.Comparator;
 
@@ -11,7 +16,7 @@ import java.util.Comparator;
  * @param <Record> Type of record
  */
 public class FixedRecordStorage<Record> extends AbstractList<Record> implements Flushable, Closeable {
-    private final FixedSizeRecordFactory<Record> recordFactory;
+    private final SerializableFactory<Record> recordFactory;
 
     // used to enforce append order(aka, exists purely for debugging/sanity checking), if not null
     private final Comparator<Record> comparator;
@@ -20,12 +25,12 @@ public class FixedRecordStorage<Record> extends AbstractList<Record> implements 
     private final String path;
 
     // allows reading from storage
-    private final RandomAccessFile file;
-    private final FileChannel channel;
+    private RandomAccessFile file;
+    private FileChannel channel;
     private final ByteBuffer readBuf;
 
     // allows appending records to storage
-    private final DataOutputStream insertStream;
+    private DataOutputStream insertStream;
 
     private int numRecords;
 
@@ -40,20 +45,24 @@ public class FixedRecordStorage<Record> extends AbstractList<Record> implements 
      * @param comparator If not null, used in asserts when adding elements
      * @throws IOException In case of IO error when accessing records file
      */
-    FixedRecordStorage(String filepath, FixedSizeRecordFactory<Record> factory, Comparator<Record> comparator) throws IOException {
+    FixedRecordStorage(String filepath, SerializableFactory<Record> factory, Comparator<Record> comparator) throws IOException {
         this.recordFactory = factory;
         this.comparator = comparator;
         this.path = filepath;
         this.sizePerRecord = factory.sizeBytes();
+        assert sizePerRecord > 0;
 
+        this.readBuf = ByteBuffer.allocate(sizePerRecord);
+        loadFile(filepath);
+    }
+
+    private void loadFile(String filepath) throws IOException {
         this.file = new RandomAccessFile(filepath, "rw");
         this.channel = file.getChannel();
-        this.readBuf = ByteBuffer.allocate(sizePerRecord);
         assert (file.length() % sizePerRecord == 0) : "Record file in improper format";
         assert (file.length() / sizePerRecord <= Integer.MAX_VALUE) : "Record file contains too many records, can only have 2^31 records";
 
         this.numRecords = (int)(file.length() / sizePerRecord);
-
         this.insertStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filepath, true)));
 
         this.lastRecord = null;
@@ -61,7 +70,6 @@ public class FixedRecordStorage<Record> extends AbstractList<Record> implements 
             this.lastRecord = get(size() - 1);
         }
     }
-
 
     @Override
     public boolean add(Record record) {
@@ -95,6 +103,28 @@ public class FixedRecordStorage<Record> extends AbstractList<Record> implements 
     @Override
     public int size() {
         return numRecords;
+    }
+
+    /**
+     * Performs external sort, replacing the file containing the records with a new one.
+     * Invalidates any methods which are reliant on old file handles.
+     * @param comparator Defines ordering
+     * @throws IOException Thrown in case of IO error
+     */
+     public void externalSort(Comparator<Record> comparator) throws IOException {
+         close();
+         var workDirPath = Path.of(path).resolve(path + "-externalSortWorkDir");
+         try (var nonSortedIs = new BufferedInputStream(new FileInputStream(path));
+              var nonSortedDis = new DataInputStream(nonSortedIs);
+              var sortedOs = new BufferedOutputStream(new FileOutputStream(path + "sorted", false));
+              var sortedDos = new DataOutputStream(sortedOs);
+              var sorter = new ExternalSorter<Record>(recordFactory, comparator, workDirPath)
+         )
+         {
+             sorter.externalSort(nonSortedDis, sortedDos);
+         }
+         Files.move(Path.of(path + "sorted"), Path.of(path), StandardCopyOption.REPLACE_EXISTING);
+         loadFile(path);
     }
 
     @Override

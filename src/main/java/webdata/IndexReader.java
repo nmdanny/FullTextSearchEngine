@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 public class IndexReader {
 
-	private final Dictionary dictionary;
+	public final Dictionary dictionary;
 	private final ReviewStorage storage;
 	private final ProductIdToDocIdMapper prodToDoc;
 
@@ -23,7 +23,7 @@ public class IndexReader {
 		try {
 			dictionary = new Dictionary(dir);
 			storage = ReviewStorage.inDirectory(dir);
-			prodToDoc = new ProductIdToDocIdMapper(dir, storage);
+			prodToDoc = new ProductIdToDocIdMapper(dir);
 		} catch (IOException ex) {
 			throw new RuntimeException("Couldn't read dictionary", ex);
 		}

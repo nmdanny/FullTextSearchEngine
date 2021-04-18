@@ -33,19 +33,4 @@ class UtilsTest {
         assertTrue(minimals.isEmpty());
 
     }
-
-    @Test
-    void interleave() {
-        var streams = List.of(
-                List.of(0, 4, 8).spliterator(),
-                List.of(1, 5, 9).spliterator(),
-                List.of(2, 6, 10).spliterator(),
-                List.of(3, 7).spliterator()
-        );
-        var interleavedSplit  = Utils.interleave(streams);
-        var interleaved = StreamSupport.stream(interleavedSplit, false)
-                .collect(Collectors.toList());
-
-        assertIterableEquals(List.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), interleaved);
-    }
 }

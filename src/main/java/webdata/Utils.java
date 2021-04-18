@@ -5,9 +5,10 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -181,6 +182,21 @@ public class Utils {
 
     }
 
+    public static void deleteDirectory(Path dirPath) throws IOException {
+        if (!Files.exists(dirPath)) {
+            return;
+        }
+        var deletedAllFiles = Files.walk(dirPath)
+                .sorted(Comparator.reverseOrder())
+                .map(Path::toFile)
+                .reduce(true, (deleted, file) -> deleted && file.delete(), Boolean::logicalAnd);
+
+        if (!deletedAllFiles) {
+            System.err.println("Couldn't delete all files within directory\n");
+        }
+        Files.deleteIfExists(dirPath);
+    }
+
     /** Drains all minimal elements from the given queue.
      */
     public static <T> Stream<T> getMinElements(PriorityQueue<T> queue) {
@@ -202,65 +218,5 @@ public class Utils {
                 .takeWhile(t -> t != null && finalComparator.compare(min, t) == 0)
                 .peek(t -> { queue.poll(); });
 
-    }
-
-    /**
-     * Interleaves a collection of streams(using spliterators as they have less overhead)
-     * <pre>
-     *     Example:
-     *     stream1 = [0, 4, 8]
-     *     stream2 = [1, 5, 9]
-     *     stream3 = [2, 6, 10]
-     *     stream4 = [3, 7]
-     *
-     *     Their interleaving is [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-     *
-     * </pre>
-     *
-     * The number of streams should be finite and relatively small.
-     *
-     * @param splitsIt Streams to interleave.
-     * @param <T> Element type
-     * @return Interleaved stream
-     */
-    public static <T> Spliterator<T> interleave(Iterable<Spliterator<T>> splitsIt) {
-        long sizeEstimate = 0;
-        /* implementation note: Using an array-list with random deletions.
-           This means if there are 's' streams, there's an O(s^2) overhead to
-           deleting them. According to https://dzone.com/articles/performance-of-array-vs-linked-list-on-modern-comp
-           this is better than using a linked list, in practice.
-         */
-        var spliterators = new ArrayList<Spliterator<T>>();
-        int cs = 0;
-        for (var split: splitsIt) {
-            sizeEstimate += split.estimateSize();
-            cs &= split.estimateSize() & (Spliterator.NONNULL | Spliterator.SIZED);
-            spliterators.add(split);
-        }
-        cs |= Spliterator.ORDERED;
-
-
-        return new Spliterators.AbstractSpliterator<T>(sizeEstimate, cs) {
-
-            int nextSpliteratorIndex = 0;
-
-            @Override
-            public boolean tryAdvance(Consumer<? super T> action) {
-                while (!spliterators.isEmpty()) {
-                    var spliterator = spliterators.get(nextSpliteratorIndex);
-                    if (spliterator.tryAdvance(action)) {
-                        nextSpliteratorIndex = (nextSpliteratorIndex + 1) % spliterators.size();
-                        return true;
-                    } else {
-                        spliterators.remove(nextSpliteratorIndex);
-                        if (spliterators.isEmpty()) {
-                            return false;
-                        }
-                        nextSpliteratorIndex = nextSpliteratorIndex % spliterators.size();
-                    }
-                }
-                return false;
-            }
-        };
     }
 }
