@@ -3,9 +3,10 @@ package webdata.spimi;
 import webdata.DocAndFreq;
 import webdata.Token;
 import webdata.Utils;
-import webdata.inverted_index.PostingListWriter;
+import webdata.dictionary.SequentialDictionaryBuilder;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,10 +34,10 @@ public class TemporaryIndexBuilder {
     /**
      * Performs 1 run of SPMI-Invert
      * @param tokenStream Token iterator (sorted by docIDs, naturally)
-     * @param os Output stream of index file
+     * @param indexPath Path of index
      * @throws IOException In case of IO failure when creating the index file
      */
-    public void invert(Iterator<Token> tokenStream, OutputStream os) throws IOException {
+    public void invert(Iterator<Token> tokenStream, Path indexPath) throws IOException {
         dictionary.clear();
         Token lastToken = null;
         curNumberOfTokens = 0;
@@ -57,17 +58,21 @@ public class TemporaryIndexBuilder {
                 Utils.logMemory(runtime);
             }
         }
-        serialize(os);
+        try (var builder = new SequentialDictionaryBuilder(indexPath.toString())) {
+            serialize(builder);
+            Utils.log("Finished creating temporary index at %s", indexPath);
+        } finally {
+            dictionary.clear();
+            runtime.gc();
+        }
         dictionary.clear();
         runtime.gc();
     }
 
-    private void serialize(OutputStream os) throws IOException {
+    private void serialize(SequentialDictionaryBuilder builder) throws IOException {
         Utils.log("Beginning to sort and serialize temporary index, has %,d unique tokens, %,d total tokens",
                 dictionary.size(), curNumberOfTokens);
         Utils.logMemory(runtime);
-        try (var dos = new DataOutputStream(os);
-             var writer = new PostingListWriter(dos)) {
             var sortedEntries = dictionary.entrySet()
                     .stream()
                     .sorted(Map.Entry.comparingByKey())
@@ -76,19 +81,11 @@ public class TemporaryIndexBuilder {
                 var term = entry.getKey();
                 var list = entry.getValue();
 
-                dos.writeUTF(term);
-                dos.writeInt(list.size());
-
-                writer.startTerm(term);
+                builder.beginTerm(term);
                 for (var docFreq: list) {
-                    writer.add(docFreq.getDocID(), docFreq.getDocFrequency());
+                    builder.addTermOccurence(docFreq.getDocID(), docFreq.getDocFrequency());
                 }
-                // flush the writer to ensure posting list bytes are written to the DataOutputStream
-                // and won't be mixed with ones from the data output stream next iteration
-                writer.flushEncoderOnly();
             }
-            Utils.log("Serialized a total of %,d bytes for temporary index\n", dos.size());
-       }
     }
 
     private boolean hasMemory() {

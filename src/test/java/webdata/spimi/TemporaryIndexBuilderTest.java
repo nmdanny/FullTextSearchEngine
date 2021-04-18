@@ -3,12 +3,19 @@ package webdata.spimi;
 import org.junit.jupiter.api.Test;
 import webdata.DocAndFreq;
 import webdata.Token;
+import webdata.Utils;
+import webdata.dictionary.Dictionary;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,7 +23,6 @@ class TemporaryIndexBuilderTest {
 
     @Test
     void invert() throws IOException  {
-        var os = new ByteArrayOutputStream();
         var spimi = new TemporaryIndexBuilder();
 
         var tokens = Stream.of(
@@ -25,43 +31,20 @@ class TemporaryIndexBuilderTest {
                 new Token("bye", 2, 1),
                 new Token("bang", 2, 4),
                 new Token("bang", 3, 2)
-        );
+        ).collect(Collectors.toList());
+
+        var dictPath = Files.createTempDirectory("testSPIMIInvert");
+
         var tokensIt = tokens.iterator();
-        spimi.invert(tokensIt, os);
+        spimi.invert(tokensIt, dictPath);
         assertFalse(tokensIt.hasNext());
 
-        var is = new ByteArrayInputStream(os.toByteArray());
-        var it = new FileIndexIterator(is);
+        var dict = new Dictionary(dictPath.toString());
 
-        assertEquals("bang", it.getTerm());
-        assertEquals(2, it.getDocumentFrequency());
+        tokens.sort(Comparator.comparing(Token::getTerm).thenComparing(Token::getDocID));
+        var gottenTokens = StreamSupport.stream(dict.tokens(), false).collect(Collectors.toList());
+        assertIterableEquals(tokens, gottenTokens);
 
-        assertIterableEquals(List.of(
-                new DocAndFreq(2, 4), new DocAndFreq(3, 2)
-        ), (Iterable<DocAndFreq>)(() -> it));
-
-        assertTrue(it.moveToNextPostingList());
-        assertEquals("bye", it.getTerm());
-        assertEquals(1, it.getDocumentFrequency());
-        assertIterableEquals(List.of(
-                new DocAndFreq(2, 1)
-        ), (Iterable<DocAndFreq>)(() -> it));
-
-        assertTrue(it.moveToNextPostingList());
-        assertEquals("hello", it.getTerm());
-        assertEquals(1, it.getDocumentFrequency());
-        assertIterableEquals(List.of(
-                new DocAndFreq(1, 3)
-        ), (Iterable<DocAndFreq>)(() -> it));
-
-
-        assertTrue(it.moveToNextPostingList());
-        assertEquals("shalom", it.getTerm());
-        assertEquals(1, it.getDocumentFrequency());
-        assertIterableEquals(List.of(
-                new DocAndFreq(1, 2)
-        ), (Iterable<DocAndFreq>)(() -> it));
-
-        assertFalse(it.moveToNextPostingList());
+        Utils.deleteDirectory(dictPath);
     }
 }

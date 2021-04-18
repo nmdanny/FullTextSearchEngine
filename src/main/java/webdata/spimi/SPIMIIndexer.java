@@ -2,14 +2,16 @@ package webdata.spimi;
 
 import webdata.Token;
 import webdata.Utils;
+import webdata.dictionary.Dictionary;
+import webdata.dictionary.SequentialDictionaryBuilder;
+import webdata.sorting.ExternalSorter;
 
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Spliterator;
 import java.util.stream.Stream;
 
 /** Builds a dictionary via SPIMI algorithm, allowing
@@ -28,8 +30,8 @@ public class SPIMIIndexer {
 
     }
 
-    private String pathForBlock(int blockNum) {
-        return dir.resolve(TEMP_INDEX_DIR).resolve("tempIndex" + blockNum + ".bin").toString();
+    private Path pathForBlock(int blockNum) {
+        return dir.resolve(TEMP_INDEX_DIR).resolve("tempIndex" + blockNum);
     }
 
     public void processTokens(Stream<Token> tokens) throws IOException {
@@ -38,17 +40,37 @@ public class SPIMIIndexer {
         int numIndices = 0;
         while (it.hasNext()) {
             ++numIndices;
-            String tempIndexPath = pathForBlock(numIndices);
             Utils.log("Creating temporary index number %d", numIndices);
             Utils.logMemory(Runtime.getRuntime());
-            try (var os = new BufferedOutputStream(new FileOutputStream(tempIndexPath, false))) {
-                temporaryIndexBuilder.invert(it, os);
-            }
+            Path indexPath = pathForBlock(numIndices);
+            Files.createDirectories(indexPath);
+            temporaryIndexBuilder.invert(it, indexPath);
         }
-        var filePaths = IntStream.rangeClosed(1, numIndices)
-                .mapToObj(this::pathForBlock).collect(Collectors.toList());
         Utils.log("Merging final index from %d temporary indices", numIndices);
-        Merger.merge(dir.toString(), filePaths);
+        merge(numIndices);
         Utils.log("Finished creating final index\n\n");
+    }
+
+    public void merge(int numIndices) throws IOException {
+        var dicts = new ArrayList<Dictionary>();
+        var tokenSplits = new ArrayList<Spliterator<Token>>();
+        for (int i=1; i <= numIndices; ++i) {
+            var dict = new Dictionary(pathForBlock(i).toString());
+            dicts.add(dict);
+            tokenSplits.add(dict.tokens());
+        }
+
+        var mergedStream = ExternalSorter.merge(tokenSplits,
+                Comparator.comparing(Token::getTerm).thenComparing(Token::getDocID));
+
+        try (var finalDictBuilder = new SequentialDictionaryBuilder(dir.toString())) {
+            mergedStream.forEachRemaining(token -> {
+                try {
+                    finalDictBuilder.addToken(token);
+                } catch (IOException ex) {
+                    throw new RuntimeException("IO error while building dictionary", ex);
+                }
+            });
+        }
     }
 }

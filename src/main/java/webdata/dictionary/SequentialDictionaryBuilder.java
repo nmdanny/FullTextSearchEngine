@@ -1,10 +1,10 @@
 package webdata.dictionary;
 
+import webdata.Token;
 import webdata.compression.FrontCodingEncoder;
 import webdata.inverted_index.PostingListWriter;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -20,6 +20,8 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
 
     private String curTerm;
     private int curTermPostingPtr;
+    private int lastDocId;
+    private int lastDocFreq;
     private int totalNumberOfTokens;
     private int uniqueNumberOfTokens;
     private int numberDocIdFreqPairs;
@@ -28,6 +30,8 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
         this.dir = dir;
         this.curTerm = null;
         this.curTermPostingPtr = -1;
+        this.lastDocId = 0;
+        this.lastDocFreq = 0;
 
         Files.createDirectories(Paths.get(dir));
         this.totalNumberOfTokens = 0;
@@ -49,6 +53,16 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
         );
     }
 
+    /** Adds given token to dictionary. Tokens must arrive lexicographically ordered by
+     *  term, followed by docID. Duplicate tokens(same term and docID, e.g, from different dictionaries)
+     *  are allowed. */
+    public void addToken(Token token) throws IOException {
+        if (!token.getTerm().equals(curTerm)) {
+            beginTerm(token.getTerm());
+        }
+        addTermOccurence(token.getDocID(), token.getDocFrequency());
+    }
+
     /** Begins a new term */
     @Override
     public void beginTerm(String term) throws IOException {
@@ -68,6 +82,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
         if (curTerm == null) {
             return;
         }
+        endTermOccurence();
         if (postingListWriter.getCurrentTermDocumentFrequency() == 0) {
             throw new IllegalStateException("You cannot end a term which has an empty posting list");
         }
@@ -106,8 +121,24 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
     @Override
     public void addTermOccurence(int docId, int freqInDoc) throws IOException {
         totalNumberOfTokens += freqInDoc;
-        postingListWriter.add(docId, freqInDoc);
+        assert docId >= lastDocId;
+        if (docId > lastDocId) {
+            endTermOccurence();
+            lastDocId = docId;
+            lastDocFreq = freqInDoc;
+        } else {
+            lastDocFreq += freqInDoc;
+        }
+    }
+
+    private void endTermOccurence() throws IOException {
+        if (lastDocId == 0) {
+            return;
+        }
+        postingListWriter.add(lastDocId, lastDocFreq);
         ++numberDocIdFreqPairs;
+        lastDocId = 0;
+        lastDocFreq = 0;
     }
 
     @Override
