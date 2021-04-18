@@ -69,7 +69,7 @@ public class ExternalSorter<T> implements Closeable {
                            DataOutputStream sortedBlockDos) throws IOException {
         var list = new ArrayList<T>();
 
-        Utils.log("Starting to sort block %d", blockNumber);
+        Utils.log("Starting to sort block %d, adding elements", blockNumber);
         boolean hasMoreElements = true;
         try {
             while (hasMemory(list)) {
@@ -78,21 +78,16 @@ public class ExternalSorter<T> implements Closeable {
         } catch (EOFException ex) {
             hasMoreElements = false;
         }
-        Utils.log(
-                "Currently have %,d bytes of free memory, sorting block with %,d elements\n" +
-                        "Total memory: %,d\n" +
-                        "Max memory: %,d\n\n",
-                runtime.freeMemory(),
-                list.size(),
-                runtime.totalMemory(),
-                runtime.maxMemory()
-        );
+        Utils.log("Finished adding %,d elements to be sorted, hasMoreElements=%b",
+                 list.size(), hasMoreElements);
+        Utils.logMemory(runtime);
         list.sort(comparator);
         Utils.log("Sorted, writing to disk");
         for (var element: list) {
             serializableFactory.serialize(element, sortedBlockDos);
         }
-        Utils.log("Serialized block %d to disk, block size: %,d bytes", blockNumber, sortedBlockDos.size());
+        Utils.log("Serialized block %d to disk, block size: %,d bytes\n",
+                  blockNumber, sortedBlockDos.size());
         return hasMoreElements;
     }
 
@@ -187,8 +182,12 @@ public class ExternalSorter<T> implements Closeable {
         }
     }
 
+    /**
+     * Check if we have enough memory to expand current block
+     * @param curBlock Current block, may be used in override
+     */
     protected boolean hasMemory(ArrayList<T> curBlock) {
-        return runtime.freeMemory() >= MIN_MEMORY_BYTES;
+        return Utils.getFreeMemory(runtime) >= MIN_MEMORY_BYTES;
     }
 
     @Override

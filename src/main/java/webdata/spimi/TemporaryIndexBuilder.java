@@ -15,13 +15,11 @@ public class TemporaryIndexBuilder {
     private final HashMap<String, ArrayList<DocAndFreq>> dictionary;
     private final Runtime runtime;
 
-    // Ensure we have at least 100mb
-    private static final long MIN_MEMORY = 1024 * 1024 * 100;
-
-    private static final double MAX_MEMORY_USAGE = 0.8;
+    // Ensure we have at least 10mb
+    private static final long MIN_MEMORY = 1024 * 1024 * 10;
 
     // for logging
-    private int curNumberOfTokens;
+    private long curNumberOfTokens;
     private long totalNumberOfTokens;
     private static final long LOG_EVERY = 1000000;
 
@@ -54,20 +52,10 @@ public class TemporaryIndexBuilder {
             ++curNumberOfTokens;
             ++totalNumberOfTokens;
             if (totalNumberOfTokens % LOG_EVERY == 0) {
-                Utils.log("Processed %,d tokens in current index. Used %.2f%% memory: Free memory: %,d, total memory: %,d, max memory: %,d",
-                        curNumberOfTokens, 100 * memoryUsagePercentage(), runtime.freeMemory(),
-                        runtime.totalMemory(), runtime.maxMemory());
+                Utils.log("Processed %,d tokens in the current index, a total of %,d tokens",
+                          curNumberOfTokens, totalNumberOfTokens);
+                Utils.logMemory(runtime);
             }
-        }
-        if (tokenStream.hasNext()) {
-            Utils.log(
-                    "Currently have %d free memory, below threshold of %d, starting new temporary index\n" +
-                            "Total memory: %d\n" +
-                            "Max memory: %d\n\n",
-                    runtime.freeMemory(),
-                    MIN_MEMORY,
-                    runtime.totalMemory(),
-                    runtime.maxMemory());
         }
         serialize(os);
         dictionary.clear();
@@ -75,6 +63,9 @@ public class TemporaryIndexBuilder {
     }
 
     private void serialize(OutputStream os) throws IOException {
+        Utils.log("Beginning to sort and serialize temporary index, has %,d unique tokens, %,d total tokens",
+                dictionary.size(), curNumberOfTokens);
+        Utils.logMemory(runtime);
         try (var dos = new DataOutputStream(os);
              var writer = new PostingListWriter(dos)) {
             var sortedEntries = dictionary.entrySet()
@@ -96,14 +87,11 @@ public class TemporaryIndexBuilder {
                 // and won't be mixed with ones from the data output stream next iteration
                 writer.flushEncoderOnly();
             }
+            Utils.log("Serialized a total of %,d bytes for temporary index\n", dos.size());
        }
     }
 
-    private double memoryUsagePercentage() {
-        return 1.0 - ((double)runtime.freeMemory() / runtime.maxMemory());
-    }
-
     private boolean hasMemory() {
-        return runtime.freeMemory() >= MIN_MEMORY && memoryUsagePercentage() <= MAX_MEMORY_USAGE;
+        return Utils.getFreeMemory(runtime) >= MIN_MEMORY;
     }
 }

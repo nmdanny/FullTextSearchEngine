@@ -40,6 +40,7 @@ public class SPIMIIndexer {
             ++numIndices;
             String tempIndexPath = pathForBlock(numIndices);
             Utils.log("Creating temporary index number %d", numIndices);
+            Utils.logMemory(Runtime.getRuntime());
             try (var os = new BufferedOutputStream(new FileOutputStream(tempIndexPath, false))) {
                 temporaryIndexBuilder.invert(it, os);
             }
@@ -48,6 +49,6 @@ public class SPIMIIndexer {
                 .mapToObj(this::pathForBlock).collect(Collectors.toList());
         Utils.log("Merging final index from %d temporary indices", numIndices);
         Merger.merge(dir.toString(), filePaths);
-        Utils.log("Finished creating final index");
+        Utils.log("Finished creating final index\n\n");
     }
 }
