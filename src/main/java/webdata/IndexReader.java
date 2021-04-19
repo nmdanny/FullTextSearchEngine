@@ -90,6 +90,7 @@ public class IndexReader {
 	* Returns 0 if there are no reviews containing this token
 	*/
 	public int getTokenFrequency(String token) {
+	    token = token.toLowerCase();
 		int dictIndex = dictionary.getIndexOfToken(token);
 		if (dictIndex < 0) {
 			return 0;
@@ -103,6 +104,7 @@ public class IndexReader {
 	* Returns 0 if there are no reviews containing this token
 	*/
 	public int getTokenCollectionFrequency(String token) {
+		token = token.toLowerCase();
 		int sum = 0;
 		var it = getReviewsWithToken(token);
 		while (it.hasMoreElements()) {
@@ -122,6 +124,7 @@ public class IndexReader {
 	* Returns an empty Enumeration if there are no reviews containing this token
 	*/
 	public Enumeration<Integer> getReviewsWithToken(String token) {
+		token = token.toLowerCase();
 		int dictIndex = dictionary.getIndexOfToken(token);
 		if (dictIndex < 0) {
 			return Utils.streamToEnumeration(Stream.empty());
@@ -157,6 +160,7 @@ public class IndexReader {
 	* Returns an empty Enumeration if there are no reviews for this product
 	*/
 	public Enumeration<Integer> getProductReviews(String productId) {
+		productId = productId.toUpperCase();
 		return Utils.streamToEnumeration(prodToDoc.getReviewIdsForProduct(productId).boxed());
 	}
 }
