@@ -113,7 +113,9 @@ public class FixedRecordStorage<Record> extends AbstractList<Record> implements 
      */
      public void externalSort(Comparator<Record> comparator) throws IOException {
          close();
-         var workDirPath = Path.of(path).resolve(path + "-externalSortWorkDir");
+         var folder = Path.of(path).getParent();
+         var filename = Path.of(path).getFileName();
+         var workDirPath = folder.resolve(filename + "-externalSort");
          try (var nonSortedIs = new BufferedInputStream(new FileInputStream(path));
               var nonSortedDis = new DataInputStream(nonSortedIs);
               var sortedOs = new BufferedOutputStream(new FileOutputStream(path + "sorted", false));
