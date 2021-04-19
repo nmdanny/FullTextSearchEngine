@@ -1,18 +1,6 @@
 package webdata;
 
-import webdata.dictionary.TermsManager;
-import webdata.parsing.ParallelReviewParser;
-import webdata.parsing.Review;
-import webdata.parsing.SequentialReviewParser;
-import webdata.parsing.Tokenizer;
-import webdata.storage.CompactReview;
-import webdata.storage.ReviewStorage;
-
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.*;
 
 public class Main {
 

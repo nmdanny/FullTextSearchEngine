@@ -2,10 +2,7 @@ package test;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import webdata.parsing.Review;
-import webdata.parsing.ParallelReviewParser;
-import webdata.parsing.SequentialReviewParser;
-import webdata.parsing.InMemoryReviewParser;
+import webdata.parsing.*;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -24,7 +21,7 @@ class ReviewParserTest {
 
     static Stream<Review> fileToReviewStream(String path, int bufSize, int numBufs) throws IOException {
 
-        return new ParallelReviewParser(bufSize, numBufs, DATASET_ENCODING).parse(path);
+        return new SequentialReviewParser(bufSize, DATASET_ENCODING).parse(path);
     }
 
     @Test
@@ -76,38 +73,19 @@ class ReviewParserTest {
     @Test
     void canParse2GbDataset() throws IOException {
         int bufSize = 1024 * 1024 * 25;
-        int numBufs = 4;
         var path = "E:\\webdata_datasets\\2gb.txt";
-        var stream1 = new ParallelReviewParser(bufSize, numBufs, DATASET_ENCODING).parse(path);
-        var stream2 = new SequentialReviewParser(bufSize, DATASET_ENCODING).parse(path);
+        var stream1 = new SequentialReviewParser(bufSize, DATASET_ENCODING).parse(path);
 
         var it1 = stream1.iterator();
-        var it2 = stream2.iterator();
 
         long id = 0;
-        while (it1.hasNext() || it2.hasNext())
+        while (it1.hasNext())
         {
-            if (it1.hasNext() && it2.hasNext())
-            {
-                var i1 = it1.next();
-                var i2 = it2.next();
-                assertEquals(i1, i2, "at index " + id);
-            } else if (it1.hasNext())
-            {
-                System.err.println("stream1(parallel) is longer: " + it1.next());
-            } else {
-                System.err.println("stream2(sequential) is longer: " + it2.next());
-            }
+            var _i1 = it1.next();
             ++id;
         }
 
-//        var ds2 =
-//        var raw = Files.readString(Path.of("E:", "webdata_datasets", "2gb.txt"), DATASET_ENCODING);
-//        var ds2 = InMemoryReviewParser.getReviewStream(raw)
-//                .collect(Collectors.toList());
-
         assertEquals(1924829, id);
-//        assertEquals(1924829, count);
 
     }
 
