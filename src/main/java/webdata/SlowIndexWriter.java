@@ -1,9 +1,7 @@
 package webdata;
 
 import webdata.parsing.LinesMemoryParser;
-import webdata.parsing.ParallelReviewParser;
 import webdata.parsing.Review;
-import webdata.parsing.SequentialReviewParser;
 import webdata.spimi.SPIMIIndexer;
 import webdata.storage.CompactReview;
 import webdata.storage.ProductIdToDocIdMapper;
@@ -33,8 +31,7 @@ public class SlowIndexWriter {
 			try (var storage = ReviewStorage.inDirectory(dir);
 				 var mapper = new ProductIdToDocIdMapper(dir)) {
 
-//				var parser = new ParallelReviewParser(1024 * 1024 * 100, inputFileCharset);
-//                var parser = new SequentialReviewParser(1024 * 1024 * 100, inputFileCharset);
+//              var parser = new SequentialReviewParser(1024 * 1024 * 100, inputFileCharset);
 //				var stream = parser.parse(inputFile)
                 var parser = new LinesMemoryParser().parse(Path.of(inputFile), inputFileCharset);
 
@@ -56,7 +53,7 @@ public class SlowIndexWriter {
 				mapper.externalSort();
 			}
 		} catch (IOException ex) {
-			System.err.println("Got IO exception during slowWrite: " + ex);
+			System.err.println("Got IO exception during slowWrite:\n" + ex);
 		}
 	}
 
