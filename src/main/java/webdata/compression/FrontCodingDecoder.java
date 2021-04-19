@@ -70,6 +70,9 @@ public class FrontCodingDecoder implements Closeable {
             arr[i] = 0;
         }
 
+        if (result.suffixLengthBytes > readBuf.capacity()) {
+            readBuf = ByteBuffer.allocate(result.suffixLengthBytes * 2);
+        }
         int read = is.readNBytes(readBuf.array(), 0, result.suffixLengthBytes);
         assert read == result.suffixLengthBytes;
 
