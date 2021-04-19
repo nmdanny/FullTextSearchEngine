@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 
 /** Class for sorting large collections that don't fit in memory
@@ -104,7 +103,10 @@ public class ExternalSorter<T> implements Closeable {
         int cs = 0;
         for (var split: splitsIt) {
             sizeEstimate += split.estimateSize();
-            cs &= split.estimateSize() & (Spliterator.NONNULL | Spliterator.SIZED);
+            if (spliterators.size() == 0) {
+                cs = split.characteristics();
+            }
+            cs &= split.characteristics() & (Spliterator.NONNULL | Spliterator.SIZED);
             spliterators.add(split);
         }
         cs |= Spliterator.ORDERED;
