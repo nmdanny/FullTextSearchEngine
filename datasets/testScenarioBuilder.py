@@ -36,7 +36,7 @@ def entry_to_typed(entry: Dict, doc_id: int) -> Entry:
     helpfulness_numerator = int(helpfulness[:helpfulnessSlash])
     helpfulness_denominator = int(helpfulness[helpfulnessSlash+1:])
 
-    product_id = entry["product/productId"].lower()
+    product_id = entry["product/productId"]
     score = int(float(entry["review/score"]))
 
     review_text = entry["review/text"]

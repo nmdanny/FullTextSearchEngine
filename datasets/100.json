@@ -3,10 +3,10 @@
     "unique_tokens": 1533,
     "num_reviews": 100,
     "product_id_to_entry": {
-        "b0001pb9fe": [
+        "B0001PB9FE": [
             {
                 "doc_id": 11,
-                "product_id": "b0001pb9fe",
+                "product_id": "B0001PB9FE",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -168,10 +168,10 @@
                 ]
             }
         ],
-        "b0001pb9fy": [
+        "B0001PB9FY": [
             {
                 "doc_id": 30,
-                "product_id": "b0001pb9fy",
+                "product_id": "B0001PB9FY",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -333,10 +333,10 @@
                 ]
             }
         ],
-        "b0009xlvg0": [
+        "B0009XLVG0": [
             {
                 "doc_id": 12,
-                "product_id": "b0009xlvg0",
+                "product_id": "B0009XLVG0",
                 "helpfulness_numerator": 4,
                 "helpfulness_denominator": 4,
                 "score": 5,
@@ -412,7 +412,7 @@
             },
             {
                 "doc_id": 13,
-                "product_id": "b0009xlvg0",
+                "product_id": "B0009XLVG0",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 1,
@@ -500,10 +500,10 @@
                 ]
             }
         ],
-        "b000e7l2r4": [
+        "B000E7L2R4": [
             {
                 "doc_id": 9,
-                "product_id": "b000e7l2r4",
+                "product_id": "B000E7L2R4",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -538,10 +538,10 @@
                 ]
             }
         ],
-        "b000e7vi7s": [
+        "B000E7VI7S": [
             {
                 "doc_id": 69,
-                "product_id": "b000e7vi7s",
+                "product_id": "B000E7VI7S",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 3,
@@ -594,7 +594,7 @@
             },
             {
                 "doc_id": 70,
-                "product_id": "b000e7vi7s",
+                "product_id": "B000E7VI7S",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 2,
                 "score": 5,
@@ -620,10 +620,10 @@
                 ]
             }
         ],
-        "b000g6rpmy": [
+        "B000G6RPMY": [
             {
                 "doc_id": 52,
-                "product_id": "b000g6rpmy",
+                "product_id": "B000G6RPMY",
                 "helpfulness_numerator": 4,
                 "helpfulness_denominator": 4,
                 "score": 5,
@@ -703,7 +703,7 @@
             },
             {
                 "doc_id": 53,
-                "product_id": "b000g6rpmy",
+                "product_id": "B000G6RPMY",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 4,
@@ -945,7 +945,7 @@
             },
             {
                 "doc_id": 54,
-                "product_id": "b000g6rpmy",
+                "product_id": "B000G6RPMY",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 3,
@@ -987,10 +987,10 @@
                 ]
             }
         ],
-        "b000lqoch0": [
+        "B000LQOCH0": [
             {
                 "doc_id": 3,
-                "product_id": "b000lqoch0",
+                "product_id": "B000LQOCH0",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 4,
@@ -1091,10 +1091,10 @@
                 ]
             }
         ],
-        "b000ua0qiq": [
+        "B000UA0QIQ": [
             {
                 "doc_id": 4,
-                "product_id": "b000ua0qiq",
+                "product_id": "B000UA0QIQ",
                 "helpfulness_numerator": 3,
                 "helpfulness_denominator": 3,
                 "score": 2,
@@ -1143,10 +1143,10 @@
                 ]
             }
         ],
-        "b00144c10s": [
+        "B00144C10S": [
             {
                 "doc_id": 29,
-                "product_id": "b00144c10s",
+                "product_id": "B00144C10S",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -1253,10 +1253,10 @@
                 ]
             }
         ],
-        "b00171apva": [
+        "B00171APVA": [
             {
                 "doc_id": 10,
-                "product_id": "b00171apva",
+                "product_id": "B00171APVA",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -1289,10 +1289,10 @@
                 ]
             }
         ],
-        "b0019cw0he": [
+        "B0019CW0HE": [
             {
                 "doc_id": 84,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 5,
                 "helpfulness_denominator": 5,
                 "score": 3,
@@ -1381,7 +1381,7 @@
             },
             {
                 "doc_id": 85,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 4,
                 "helpfulness_denominator": 4,
                 "score": 3,
@@ -1454,7 +1454,7 @@
             },
             {
                 "doc_id": 86,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 4,
                 "helpfulness_denominator": 4,
                 "score": 5,
@@ -1513,7 +1513,7 @@
             },
             {
                 "doc_id": 87,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -1605,7 +1605,7 @@
             },
             {
                 "doc_id": 88,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -1651,7 +1651,7 @@
             },
             {
                 "doc_id": 89,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -1790,7 +1790,7 @@
             },
             {
                 "doc_id": 90,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -1848,7 +1848,7 @@
             },
             {
                 "doc_id": 91,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -1895,7 +1895,7 @@
             },
             {
                 "doc_id": 92,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -1926,7 +1926,7 @@
             },
             {
                 "doc_id": 93,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -1972,7 +1972,7 @@
             },
             {
                 "doc_id": 94,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -2167,7 +2167,7 @@
             },
             {
                 "doc_id": 95,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -2201,7 +2201,7 @@
             },
             {
                 "doc_id": 96,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -2274,7 +2274,7 @@
             },
             {
                 "doc_id": 97,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -2452,7 +2452,7 @@
             },
             {
                 "doc_id": 98,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -2519,7 +2519,7 @@
             },
             {
                 "doc_id": 99,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -2606,7 +2606,7 @@
             },
             {
                 "doc_id": 100,
-                "product_id": "b0019cw0he",
+                "product_id": "B0019CW0HE",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 1,
                 "score": 1,
@@ -2651,10 +2651,10 @@
                 ]
             }
         ],
-        "b001e4kfg0": [
+        "B001E4KFG0": [
             {
                 "doc_id": 1,
-                "product_id": "b001e4kfg0",
+                "product_id": "B001E4KFG0",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -2710,10 +2710,10 @@
                 ]
             }
         ],
-        "b001eo5qw8": [
+        "B001EO5QW8": [
             {
                 "doc_id": 33,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 19,
                 "helpfulness_denominator": 19,
                 "score": 4,
@@ -2928,7 +2928,7 @@
             },
             {
                 "doc_id": 34,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 13,
                 "helpfulness_denominator": 13,
                 "score": 4,
@@ -3030,7 +3030,7 @@
             },
             {
                 "doc_id": 35,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 9,
                 "helpfulness_denominator": 9,
                 "score": 5,
@@ -3138,7 +3138,7 @@
             },
             {
                 "doc_id": 36,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 3,
                 "helpfulness_denominator": 3,
                 "score": 4,
@@ -3228,7 +3228,7 @@
             },
             {
                 "doc_id": 37,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 2,
                 "helpfulness_denominator": 2,
                 "score": 5,
@@ -3282,7 +3282,7 @@
             },
             {
                 "doc_id": 38,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -3341,7 +3341,7 @@
             },
             {
                 "doc_id": 39,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 4,
@@ -3450,7 +3450,7 @@
             },
             {
                 "doc_id": 40,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -3520,7 +3520,7 @@
             },
             {
                 "doc_id": 41,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -3651,7 +3651,7 @@
             },
             {
                 "doc_id": 42,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -3893,7 +3893,7 @@
             },
             {
                 "doc_id": 43,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -3936,7 +3936,7 @@
             },
             {
                 "doc_id": 44,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -3981,7 +3981,7 @@
             },
             {
                 "doc_id": 45,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -4038,7 +4038,7 @@
             },
             {
                 "doc_id": 46,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 3,
@@ -4089,7 +4089,7 @@
             },
             {
                 "doc_id": 47,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -4146,7 +4146,7 @@
             },
             {
                 "doc_id": 48,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 2,
                 "score": 3,
@@ -4176,7 +4176,7 @@
             },
             {
                 "doc_id": 49,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 2,
                 "score": 4,
@@ -4237,7 +4237,7 @@
             },
             {
                 "doc_id": 50,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 1,
                 "score": 3,
@@ -4283,7 +4283,7 @@
             },
             {
                 "doc_id": 51,
-                "product_id": "b001eo5qw8",
+                "product_id": "B001EO5QW8",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 7,
                 "score": 1,
@@ -4311,10 +4311,10 @@
                 ]
             }
         ],
-        "b001eo5tpm": [
+        "B001EO5TPM": [
             {
                 "doc_id": 63,
-                "product_id": "b001eo5tpm",
+                "product_id": "B001EO5TPM",
                 "helpfulness_numerator": 2,
                 "helpfulness_denominator": 2,
                 "score": 1,
@@ -4339,10 +4339,10 @@
                 ]
             }
         ],
-        "b001eppi84": [
+        "B001EPPI84": [
             {
                 "doc_id": 75,
-                "product_id": "b001eppi84",
+                "product_id": "B001EPPI84",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 2,
@@ -4366,7 +4366,7 @@
             },
             {
                 "doc_id": 76,
-                "product_id": "b001eppi84",
+                "product_id": "B001EPPI84",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 1,
@@ -4393,10 +4393,10 @@
                 ]
             }
         ],
-        "b001gvisjc": [
+        "B001GVISJC": [
             {
                 "doc_id": 71,
-                "product_id": "b001gvisjc",
+                "product_id": "B001GVISJC",
                 "helpfulness_numerator": 2,
                 "helpfulness_denominator": 2,
                 "score": 5,
@@ -4479,7 +4479,7 @@
             },
             {
                 "doc_id": 72,
-                "product_id": "b001gvisjc",
+                "product_id": "B001GVISJC",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -4612,10 +4612,10 @@
                 ]
             }
         ],
-        "b001gvisjm": [
+        "B001GVISJM": [
             {
                 "doc_id": 14,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 2,
                 "helpfulness_denominator": 2,
                 "score": 4,
@@ -4639,7 +4639,7 @@
             },
             {
                 "doc_id": 15,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 4,
                 "helpfulness_denominator": 5,
                 "score": 5,
@@ -4669,7 +4669,7 @@
             },
             {
                 "doc_id": 16,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 4,
                 "helpfulness_denominator": 5,
                 "score": 5,
@@ -4704,7 +4704,7 @@
             },
             {
                 "doc_id": 17,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 2,
@@ -4755,7 +4755,7 @@
             },
             {
                 "doc_id": 18,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -4789,7 +4789,7 @@
             },
             {
                 "doc_id": 19,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -4930,7 +4930,7 @@
             },
             {
                 "doc_id": 20,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -4968,7 +4968,7 @@
             },
             {
                 "doc_id": 21,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -5025,7 +5025,7 @@
             },
             {
                 "doc_id": 22,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -5091,7 +5091,7 @@
             },
             {
                 "doc_id": 23,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -5129,7 +5129,7 @@
             },
             {
                 "doc_id": 24,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -5157,7 +5157,7 @@
             },
             {
                 "doc_id": 25,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -5227,7 +5227,7 @@
             },
             {
                 "doc_id": 26,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -5261,7 +5261,7 @@
             },
             {
                 "doc_id": 27,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 1,
                 "score": 1,
@@ -5287,7 +5287,7 @@
             },
             {
                 "doc_id": 28,
-                "product_id": "b001gvisjm",
+                "product_id": "B001GVISJM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 1,
                 "score": 4,
@@ -5332,10 +5332,10 @@
                 ]
             }
         ],
-        "b002gwhc0g": [
+        "B002GWHC0G": [
             {
                 "doc_id": 55,
-                "product_id": "b002gwhc0g",
+                "product_id": "B002GWHC0G",
                 "helpfulness_numerator": 2,
                 "helpfulness_denominator": 2,
                 "score": 4,
@@ -5413,7 +5413,7 @@
             },
             {
                 "doc_id": 56,
-                "product_id": "b002gwhc0g",
+                "product_id": "B002GWHC0G",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -5482,10 +5482,10 @@
                 ]
             }
         ],
-        "b003f6uo7k": [
+        "B003F6UO7K": [
             {
                 "doc_id": 31,
-                "product_id": "b003f6uo7k",
+                "product_id": "B003F6UO7K",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -5588,7 +5588,7 @@
             },
             {
                 "doc_id": 32,
-                "product_id": "b003f6uo7k",
+                "product_id": "B003F6UO7K",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -5615,10 +5615,10 @@
                 ]
             }
         ],
-        "b003zfrkgo": [
+        "B003ZFRKGO": [
             {
                 "doc_id": 83,
-                "product_id": "b003zfrkgo",
+                "product_id": "B003ZFRKGO",
                 "helpfulness_numerator": 15,
                 "helpfulness_denominator": 15,
                 "score": 5,
@@ -6073,10 +6073,10 @@
                 ]
             }
         ],
-        "b004n5kulm": [
+        "B004N5KULM": [
             {
                 "doc_id": 57,
-                "product_id": "b004n5kulm",
+                "product_id": "B004N5KULM",
                 "helpfulness_numerator": 2,
                 "helpfulness_denominator": 2,
                 "score": 5,
@@ -6120,7 +6120,7 @@
             },
             {
                 "doc_id": 58,
-                "product_id": "b004n5kulm",
+                "product_id": "B004N5KULM",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -6161,7 +6161,7 @@
             },
             {
                 "doc_id": 59,
-                "product_id": "b004n5kulm",
+                "product_id": "B004N5KULM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -6196,7 +6196,7 @@
             },
             {
                 "doc_id": 60,
-                "product_id": "b004n5kulm",
+                "product_id": "B004N5KULM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -6228,7 +6228,7 @@
             },
             {
                 "doc_id": 61,
-                "product_id": "b004n5kulm",
+                "product_id": "B004N5KULM",
                 "helpfulness_numerator": 2,
                 "helpfulness_denominator": 4,
                 "score": 3,
@@ -6268,7 +6268,7 @@
             },
             {
                 "doc_id": 62,
-                "product_id": "b004n5kulm",
+                "product_id": "B004N5KULM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 2,
                 "score": 5,
@@ -6306,10 +6306,10 @@
                 ]
             }
         ],
-        "b004x2kr36": [
+        "B004X2KR36": [
             {
                 "doc_id": 77,
-                "product_id": "b004x2kr36",
+                "product_id": "B004X2KR36",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -6415,7 +6415,7 @@
             },
             {
                 "doc_id": 78,
-                "product_id": "b004x2kr36",
+                "product_id": "B004X2KR36",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -6484,7 +6484,7 @@
             },
             {
                 "doc_id": 79,
-                "product_id": "b004x2kr36",
+                "product_id": "B004X2KR36",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 3,
@@ -6516,10 +6516,10 @@
                 ]
             }
         ],
-        "b0059wxjkm": [
+        "B0059WXJKM": [
             {
                 "doc_id": 74,
-                "product_id": "b0059wxjkm",
+                "product_id": "B0059WXJKM",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 1,
                 "score": 1,
@@ -6841,10 +6841,10 @@
                 ]
             }
         ],
-        "b005dum9uq": [
+        "B005DUM9UQ": [
             {
                 "doc_id": 64,
-                "product_id": "b005dum9uq",
+                "product_id": "B005DUM9UQ",
                 "helpfulness_numerator": 3,
                 "helpfulness_denominator": 3,
                 "score": 5,
@@ -7031,7 +7031,7 @@
             },
             {
                 "doc_id": 65,
-                "product_id": "b005dum9uq",
+                "product_id": "B005DUM9UQ",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -7097,7 +7097,7 @@
             },
             {
                 "doc_id": 66,
-                "product_id": "b005dum9uq",
+                "product_id": "B005DUM9UQ",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -7139,7 +7139,7 @@
             },
             {
                 "doc_id": 67,
-                "product_id": "b005dum9uq",
+                "product_id": "B005DUM9UQ",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -7291,7 +7291,7 @@
             },
             {
                 "doc_id": 68,
-                "product_id": "b005dum9uq",
+                "product_id": "B005DUM9UQ",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 1,
                 "score": 2,
@@ -7393,10 +7393,10 @@
                 ]
             }
         ],
-        "b005r8je8o": [
+        "B005R8JE8O": [
             {
                 "doc_id": 80,
-                "product_id": "b005r8je8o",
+                "product_id": "B005R8JE8O",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -7438,10 +7438,10 @@
                 ]
             }
         ],
-        "b0066dmi6y": [
+        "B0066DMI6Y": [
             {
                 "doc_id": 81,
-                "product_id": "b0066dmi6y",
+                "product_id": "B0066DMI6Y",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 5,
@@ -7488,7 +7488,7 @@
             },
             {
                 "doc_id": 82,
-                "product_id": "b0066dmi6y",
+                "product_id": "B0066DMI6Y",
                 "helpfulness_numerator": 1,
                 "helpfulness_denominator": 1,
                 "score": 4,
@@ -7522,10 +7522,10 @@
                 ]
             }
         ],
-        "b006k2zz7k": [
+        "B006K2ZZ7K": [
             {
                 "doc_id": 5,
-                "product_id": "b006k2zz7k",
+                "product_id": "B006K2ZZ7K",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -7561,7 +7561,7 @@
             },
             {
                 "doc_id": 6,
-                "product_id": "b006k2zz7k",
+                "product_id": "B006K2ZZ7K",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 4,
@@ -7643,7 +7643,7 @@
             },
             {
                 "doc_id": 7,
-                "product_id": "b006k2zz7k",
+                "product_id": "B006K2ZZ7K",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -7703,7 +7703,7 @@
             },
             {
                 "doc_id": 8,
-                "product_id": "b006k2zz7k",
+                "product_id": "B006K2ZZ7K",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -7735,10 +7735,10 @@
                 ]
             }
         ],
-        "b006sqbrma": [
+        "B006SQBRMA": [
             {
                 "doc_id": 73,
-                "product_id": "b006sqbrma",
+                "product_id": "B006SQBRMA",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 5,
@@ -7821,10 +7821,10 @@
                 ]
             }
         ],
-        "b00813grg4": [
+        "B00813GRG4": [
             {
                 "doc_id": 2,
-                "product_id": "b00813grg4",
+                "product_id": "B00813GRG4",
                 "helpfulness_numerator": 0,
                 "helpfulness_denominator": 0,
                 "score": 1,
@@ -22313,41 +22313,41 @@
         "represent": 1
     },
     "product_id_to_review_ids": {
-        "b0001pb9fe": [
+        "B0001PB9FE": [
             11
         ],
-        "b0001pb9fy": [
+        "B0001PB9FY": [
             30
         ],
-        "b0009xlvg0": [
+        "B0009XLVG0": [
             12,
             13
         ],
-        "b000e7l2r4": [
+        "B000E7L2R4": [
             9
         ],
-        "b000e7vi7s": [
+        "B000E7VI7S": [
             69,
             70
         ],
-        "b000g6rpmy": [
+        "B000G6RPMY": [
             52,
             53,
             54
         ],
-        "b000lqoch0": [
+        "B000LQOCH0": [
             3
         ],
-        "b000ua0qiq": [
+        "B000UA0QIQ": [
             4
         ],
-        "b00144c10s": [
+        "B00144C10S": [
             29
         ],
-        "b00171apva": [
+        "B00171APVA": [
             10
         ],
-        "b0019cw0he": [
+        "B0019CW0HE": [
             84,
             85,
             86,
@@ -22366,10 +22366,10 @@
             99,
             100
         ],
-        "b001e4kfg0": [
+        "B001E4KFG0": [
             1
         ],
-        "b001eo5qw8": [
+        "B001EO5QW8": [
             33,
             34,
             35,
@@ -22390,18 +22390,18 @@
             50,
             51
         ],
-        "b001eo5tpm": [
+        "B001EO5TPM": [
             63
         ],
-        "b001eppi84": [
+        "B001EPPI84": [
             75,
             76
         ],
-        "b001gvisjc": [
+        "B001GVISJC": [
             71,
             72
         ],
-        "b001gvisjm": [
+        "B001GVISJM": [
             14,
             15,
             16,
@@ -22418,18 +22418,18 @@
             27,
             28
         ],
-        "b002gwhc0g": [
+        "B002GWHC0G": [
             55,
             56
         ],
-        "b003f6uo7k": [
+        "B003F6UO7K": [
             31,
             32
         ],
-        "b003zfrkgo": [
+        "B003ZFRKGO": [
             83
         ],
-        "b004n5kulm": [
+        "B004N5KULM": [
             57,
             58,
             59,
@@ -22437,38 +22437,38 @@
             61,
             62
         ],
-        "b004x2kr36": [
+        "B004X2KR36": [
             77,
             78,
             79
         ],
-        "b0059wxjkm": [
+        "B0059WXJKM": [
             74
         ],
-        "b005dum9uq": [
+        "B005DUM9UQ": [
             64,
             65,
             66,
             67,
             68
         ],
-        "b005r8je8o": [
+        "B005R8JE8O": [
             80
         ],
-        "b0066dmi6y": [
+        "B0066DMI6Y": [
             81,
             82
         ],
-        "b006k2zz7k": [
+        "B006K2ZZ7K": [
             5,
             6,
             7,
             8
         ],
-        "b006sqbrma": [
+        "B006SQBRMA": [
             73
         ],
-        "b00813grg4": [
+        "B00813GRG4": [
             2
         ]
     }

@@ -199,11 +199,11 @@ public class ProductIdToDocIdMapper extends AbstractList<ProductIdToDocIdMapper.
     }
 
     /** Returns a stream of document IDs for given product,
-     *  assuming the storage is sorted. */
+     *  assuming the storage is sorted. Automatically converts productID to upper-case */
     public IntStream getReviewIdsForProduct(String productID) {
         int pairStorageIndex = Collections.binarySearch(
                 abstractList,
-                productID.toLowerCase()
+                productID.toUpperCase()
         );
 
         if (pairStorageIndex < 0) {

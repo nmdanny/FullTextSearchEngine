@@ -106,7 +106,7 @@ public class IndexReaderIntegrationTest {
             var expectedEntries = productIdAndEntry.getValue();
 
             for (var entry: expectedEntries) {
-                assertEquals(entry.productId, reader.getProductId(entry.docId).toLowerCase());
+                assertEquals(entry.productId, reader.getProductId(entry.docId));
                 assertEquals(entry.score, reader.getReviewScore(entry.docId));
                 assertEquals(entry.helpfulnessNumerator, reader.getReviewHelpfulnessNumerator(entry.docId));
                 assertEquals(entry.helpfulnessDenominator, reader.getReviewHelpfulnessDenominator(entry.docId));

@@ -86,7 +86,7 @@ public class Review {
 
         Review review = new Review();
         review.docId = 0;
-        review.productId = productId.toLowerCase();
+        review.productId = productId.toUpperCase();
         review.helpfulnessNumerator = helpfulnessNumerator;
         review.helpfulnessDenominator = helpfulnessDenominator;
         review.score = scoreInt;
