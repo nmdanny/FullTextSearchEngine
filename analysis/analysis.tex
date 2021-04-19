@@ -108,16 +108,12 @@ to obtain a review with a given review ID.
 \label{sec:pairStorage}
 
 In order to allow $O(\log D)$ implementation of \verb+getProductReviews(String productId)+, 
-there is a file containing $D$ fixed size records of the form $(fromDocId, toDocId)$ ordered
-by the product IDs corresponding to said records. Each record represents the range of reviews
+there is a file containing $D$ fixed size records of the form $(fromDocId, toDocId, productID)$ ordered
+by the product IDs. Each record represents the range of reviews
 for said product.
 
-The actual product IDs aren't stored in this file, but rather in the compact review storage,
-however, the fact the file is ordered by those IDs is enough to perform binary search with
-a product ID, with the caveat that we'll need 2 IO operations per binary search step(one in the pair storage, and another in the compact storage)
-
-It is possible to store the product ID and reduce the running time at the cost of higher
-disk usage.
+The fact the product ID stored on both the compact review storage as well as the pair storage might seem wasteful, but it reduces time spent on IO
+while doing binary search and allows better utilization of cache locality.
 
 
 \section{Main Memory Versus Disk}
@@ -178,7 +174,7 @@ might load a few more kilobytes into memory, but they essentially take constant 
 	 
 	\item[Product ID to docID Pair Storage] $O(P)$ 
 	 
-	 Mostly explained in \hyperref[sec:pairStorage]{a previous section} - we have $P$ records and each only uses 2 integers.
+	 Mostly explained in \hyperref[sec:pairStorage]{a previous section} - we have $P$ records and each only uses 2 integers and 10 bytes(18 bytes per record)
 	 
 \end{description}
   
