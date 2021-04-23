@@ -10,9 +10,7 @@ import itertools
 import re
 import json
 
-ENCODING = "iso-8859-1"
-# ENCODING = "utf-8"
-NOT_ALPHANUM = re.compile("\\W+", re.UNICODE)
+NOT_ALPHANUM = re.compile("[^A-Za-z0-9]")
 
 
 def tokenize(tokens: str) -> List[str]:
@@ -108,7 +106,7 @@ def parse(filename: Path) -> Iterator[Entry]:
     if filename.suffix == ".gz":
         f = gzip.open(filename, 'rt')
     else:
-        f = open(filename, 'r', encoding=ENCODING)
+        f = open(filename, 'r')
     entry = {}
     doc_id = 1
     for l in f:

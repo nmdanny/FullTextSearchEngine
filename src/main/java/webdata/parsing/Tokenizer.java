@@ -5,7 +5,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class Tokenizer {
-    static final Pattern NOT_ALPHANUM = Pattern.compile("\\W++", Pattern.UNICODE_CHARACTER_CLASS);
+//    static final Pattern NOT_ALPHANUM = Pattern.compile("\\W++", Pattern.UNICODE_CHARACTER_CLASS);
+    static final Pattern NOT_ALPHANUM = Pattern.compile("[^A-Za-z0-9]++");
 
     public static String[] tokenize(CharSequence raw)
     {

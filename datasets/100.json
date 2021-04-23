@@ -1,6 +1,6 @@
 {
     "total_tokens": 6903,
-    "unique_tokens": 1533,
+    "unique_tokens": 1532,
     "num_reviews": 100,
     "product_id_to_entry": {
         "B0001PB9FE": [
@@ -1808,7 +1808,7 @@
                     "all",
                     "ages",
                     "breeds",
-                    "ît",
+                    "t",
                     "s",
                     "a",
                     "real",
@@ -18319,6 +18319,8 @@
             1,
             89,
             1,
+            90,
+            1,
             94,
             1,
             96,
@@ -20771,16 +20773,12 @@
         "zip": [
             17,
             1
-        ],
-        "ît": [
-            90,
-            1
         ]
     },
     "term_to_collection_frequency": {
         "i": 227,
         "don": 16,
-        "t": 39,
+        "t": 40,
         "know": 8,
         "if": 23,
         "it": 132,
@@ -21327,7 +21325,6 @@
         "idea": 2,
         "ages": 3,
         "breeds": 1,
-        "ît": 1,
         "real": 2,
         "convenience": 2,
         "3": 8,
