@@ -1,22 +1,18 @@
 package webdata.dictionary;
 
+import webdata.Token;
 import webdata.parsing.Tokenizer;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-
-class TermOccurrence {
-    String term;
-    int docId;
-    int freqInDoc;
-}
+import java.util.stream.Stream;
 
 /** Used to fill a dictionary from a list of documents within memory. Every seen token is kept in memory
  *  until we actually fill the dictionary. */
 public class InMemoryIndexer {
-    private final ArrayList<TermOccurrence> occurrences;
+    private final ArrayList<Token> occurrences;
     private final SequentialDictionaryBuilder dictionaryBuilder;
 
     public InMemoryIndexer(SequentialDictionaryBuilder dictionaryBuilder) {
@@ -25,40 +21,38 @@ public class InMemoryIndexer {
     }
 
     public void processDocument(int docId, CharSequence document) {
-        var tokens = Tokenizer.tokenize(document);
-        processDocument(docId, tokens);
+        processDocument(docId, Tokenizer.tokensAsStream(document));
     }
 
-    public void processDocument(int docId, String[] tokens) {
-        var tokenToOccurrence = new HashMap<String, TermOccurrence>();
-        for (var token: tokens) {
-            TermOccurrence occurrence = tokenToOccurrence.get(token);
+    /**
+     * Processes a document
+     * @param docId Document ID
+     * @param tokens Document tokens
+     */
+    public void processDocument(int docId, Stream<String> tokens) {
+        var tokenToFreq = new HashMap<String, Integer>();
+        tokens.forEach(token -> {
             assert !token.isEmpty();
-            if (occurrence == null) {
-                occurrence = new TermOccurrence();
-                occurrence.docId = docId;
-                occurrence.term = token;
-                occurrence.freqInDoc = 0;
-                tokenToOccurrence.put(token, occurrence);
-            }
-            ++occurrence.freqInDoc;
+            tokenToFreq.merge(token, 1, Integer::sum);
+        });
+        for (var entry: tokenToFreq.entrySet()) {
+            occurrences.add(new Token(
+                    entry.getKey(), docId, entry.getValue()
+            ));
         }
-        occurrences.addAll(tokenToOccurrence.values());
     }
 
     public void finish() throws IOException {
         String curTerm = null;
-        // TODO: if I compare via CharBuffer, modify
-        //       the first comparator accordingly
-        Comparator<TermOccurrence> comparator = Comparator.comparing(occ -> occ.term);
-        comparator = comparator.thenComparingInt(occ -> occ.docId);
+        Comparator<Token> comparator = Comparator.comparing(Token::getTerm);
+        comparator = comparator.thenComparingInt(Token::getDocID);
         occurrences.sort(comparator);
         for (var occurence: occurrences) {
-            if (!occurence.term.equals(curTerm)) {
-                curTerm = occurence.term;
-                dictionaryBuilder.beginTerm(occurence.term);
+            if (!occurence.getTerm().equals(curTerm)) {
+                curTerm = occurence.getTerm();
+                dictionaryBuilder.beginTerm(occurence.getTerm());
             }
-            dictionaryBuilder.addTermOccurence(occurence.docId, occurence.freqInDoc);
+            dictionaryBuilder.addTermOccurence(occurence.getDocID(), occurence.getDocFrequency());
         }
         dictionaryBuilder.endTerm();
         dictionaryBuilder.flush();
