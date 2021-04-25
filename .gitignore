@@ -1,3 +1,14 @@
+# Belongs to test repository
+img.png
+README.md
+.gittest/
+src/main/java/webdata/YOUR_FILES_GO_HERE
+
+# Produced by program
+datasets/100/
+datasets/1000/
+*.jfr
+
 # Created by https://www.toptal.com/developers/gitignore/api/java,linux,windows,intellij,maven
 # Edit at https://www.toptal.com/developers/gitignore?templates=java,linux,windows,intellij,maven
 

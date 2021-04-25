@@ -2,6 +2,7 @@ package webdata;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.GsonBuilder;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.*;
@@ -65,10 +66,16 @@ public class IndexReaderIntegrationTest {
        });
     }
 
+    static Map<Path, Scenario> scenarioCache = new HashMap<>();
+
     /** Creates a test scenario
      * @param txtPath Path of .txt input file, there should also be a sibling .json file of the same name
      */
     static Scenario loadScenario(Path txtPath) throws IOException {
+
+        if (scenarioCache.containsKey(txtPath)) {
+            return scenarioCache.get(txtPath);
+        }
 
         var fileNameNoExt  = txtPath.getFileName().toString().replace(".txt", "");
         var tempDir = Files.createTempDirectory("IndexReaderTest-" + fileNameNoExt + "-");
@@ -87,6 +94,8 @@ public class IndexReaderIntegrationTest {
         new SlowIndexWriter().slowWrite(txtPath.toString(), tempDir.toString());
         scen.reader = new IndexReader(tempDir.toString());
         scen.expectedObject = gson.fromJson(reader, ExpectedResults.class);
+
+        scenarioCache.put(txtPath, scen);
         return scen;
     }
 
@@ -171,4 +180,10 @@ public class IndexReaderIntegrationTest {
         assertEquals(expected.totalTokens, reader.getTokenSizeOfReviews());
     }
 
+    @BeforeAll
+    static void deleteDictionaries() {
+        for (var scenario: scenarioCache.values()) {
+            new SlowIndexWriter().removeIndex(scenario.tempDir.toString());
+        }
+    }
 }
