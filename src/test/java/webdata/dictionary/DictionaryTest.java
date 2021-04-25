@@ -3,13 +3,17 @@ package webdata.dictionary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import webdata.Token;
+import webdata.spimi.SPIMIIndexer;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,15 +27,22 @@ public class DictionaryTest {
     Map<Integer, Object[][]> docIdToDoc;
 
 
+
     @BeforeEach
     void setupDictionary() throws IOException {
         tempDir = Files.createTempDirectory("canCreateSmallDictionary");
-        var seqDictBuilder = new SequentialDictionaryBuilder(tempDir.toString());
 
-        var indexer = new InMemoryIndexer(seqDictBuilder);
-        indexer.processDocument(1, "שרה שרה שיר שמח שיר שמח שרה שרה test");
-        indexer.processDocument(2, "גנן גידל דגן בגן, דגן גדול גדל בגן test");
-        indexer.finish();
+        var pat = Pattern.compile("\\W++", Pattern.UNICODE_CHARACTER_CLASS);
+        var indexer = new SPIMIIndexer(tempDir);
+        var tokens1 = Arrays.stream(pat.split("שרה שרה שיר שמח שיר שמח שרה שרה test"))
+                .filter(Predicate.not(String::isBlank))
+                .map(st -> new Token(st, 1, 1));
+        var tokens2 = Arrays.stream(pat.split("גנן גידל דגן בגן, דגן גדול גדל בגן test"))
+                .filter(Predicate.not(String::isBlank))
+                .map(st -> new Token(st, 2, 1));
+
+        var tokens = Stream.concat(tokens1, tokens2);
+        indexer.processTokens(tokens);
 
         dict = new Dictionary(tempDir.toString());
 
