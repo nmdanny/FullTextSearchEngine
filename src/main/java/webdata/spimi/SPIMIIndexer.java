@@ -22,6 +22,8 @@ public class SPIMIIndexer {
     private final Path dir;
     private static final String TEMP_INDEX_DIR = "temp_indices";
 
+    private static final long LOG_EVERY = 10000000L;
+
     public SPIMIIndexer(Path dir) throws IOException {
         this.dir = dir;
         this.temporaryIndexBuilder = new TemporaryIndexBuilder();
@@ -47,6 +49,8 @@ public class SPIMIIndexer {
             temporaryIndexBuilder.invert(it, indexPath);
         }
         Utils.log("Merging final index from %d temporary indices", numIndices);
+        Utils.log("Processed a total of %,d tokens", temporaryIndexBuilder.totalNumberOfTokens);
+
         merge(numIndices);
         Utils.log("Finished creating final index\n\n");
     }
@@ -63,10 +67,17 @@ public class SPIMIIndexer {
         var mergedStream = ExternalSorter.merge(tokenSplits,
                 Comparator.comparing(Token::getTerm).thenComparing(Token::getDocID));
 
+        long[] numTokensMerged = new long[]{0};
         try (var finalDictBuilder = new SequentialDictionaryBuilder(dir.toString())) {
             mergedStream.forEachRemaining(token -> {
                 try {
                     finalDictBuilder.addToken(token);
+                    numTokensMerged[0]++;
+                    if (numTokensMerged[0] % LOG_EVERY == 0) {
+                        Utils.log("So far merged a total of %,d tokens out of %,d",
+                                numTokensMerged[0],
+                                temporaryIndexBuilder.totalNumberOfTokens);
+                    }
                 } catch (IOException ex) {
                     throw new RuntimeException("IO error while building dictionary", ex);
                 }

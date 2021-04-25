@@ -20,8 +20,8 @@ public class TemporaryIndexBuilder {
     private static final long MIN_MEMORY = 1024 * 1024 * 10;
 
     // for logging
-    private long curNumberOfTokens;
-    private long totalNumberOfTokens;
+    public long curNumberOfTokens;
+    public long totalNumberOfTokens;
     private static final long LOG_EVERY = 1000000;
 
     public TemporaryIndexBuilder() {
