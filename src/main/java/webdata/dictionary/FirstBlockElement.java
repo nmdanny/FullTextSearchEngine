@@ -3,6 +3,7 @@ package webdata.dictionary;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Represents the first element in a block, which contains a term pointer
@@ -44,6 +45,14 @@ class FirstBlockElement implements DictionaryElement {
         int postingPtr = in.readInt();
         int suffixLength = in.readInt();
         int suffixPos = in.readInt();
+        return new FirstBlockElement(frequency, postingPtr, suffixLength, suffixPos);
+    }
+
+    public static FirstBlockElement deserialize(ByteBuffer buf) {
+        int frequency = buf.getInt();
+        int postingPtr = buf.getInt();
+        int suffixLength = buf.getInt();
+        int suffixPos = buf.getInt();
         return new FirstBlockElement(frequency, postingPtr, suffixLength, suffixPos);
     }
 

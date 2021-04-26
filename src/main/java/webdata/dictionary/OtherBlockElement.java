@@ -3,6 +3,7 @@ package webdata.dictionary;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Represents a block element which isn't the first
@@ -44,6 +45,14 @@ class OtherBlockElement implements DictionaryElement {
         int postingPtr = in.readInt();
         int prefixLength = in.readInt();
         int suffixLength = in.readInt();
+        return new OtherBlockElement(frequency, postingPtr, prefixLength, suffixLength);
+    }
+
+    public static OtherBlockElement deserialize(ByteBuffer buf) {
+        int frequency = buf.getInt();
+        int postingPtr = buf.getInt();
+        int prefixLength = buf.getInt();
+        int suffixLength = buf.getInt();
         return new OtherBlockElement(frequency, postingPtr, prefixLength, suffixLength);
     }
 }

@@ -1,6 +1,7 @@
 package webdata.dictionary;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.util.AbstractList;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -11,6 +12,8 @@ import java.util.function.Consumer;
 class PackedDictionaryElements extends AbstractList<DictionaryElement> {
 
     private final byte[] packedBytes;
+    // wraps packedBytes
+    private final ByteBuffer byteBuffer;
     private final int numFirstBlockElement;
     private final int numOtherBlockElement;
 
@@ -35,6 +38,7 @@ class PackedDictionaryElements extends AbstractList<DictionaryElement> {
                 }
             }
             this.packedBytes = byteArrayOs.toByteArray();
+            this.byteBuffer = ByteBuffer.wrap(packedBytes);
             this.numFirstBlockElement = numFirstBlockElement;
             this.numOtherBlockElement = numOtherBlockElement;
             assert this.packedBytes.length == this.numFirstBlockElement * FirstBlockElement.SIZE_BYTES + this.numOtherBlockElement * OtherBlockElement.SIZE_BYTES;
@@ -60,26 +64,21 @@ class PackedDictionaryElements extends AbstractList<DictionaryElement> {
         return offset;
     }
 
+
     @Override
     public DictionaryElement get(int index) {
+        assert index >= 0 && index < size();
 
         int blockIx = index / Dictionary.BLOCK_SIZE;
         int posInBlock = index % Dictionary.BLOCK_SIZE;
         int bytePos = getByteIndexOfBlockBeginning(blockIx) + getByteOffsetOfElementInBlock(posInBlock);
 
 
-        try (var is = new ByteArrayInputStream(packedBytes);
-             var dis = new DataInputStream(is)) {
-            long skipped = is.skip(bytePos);
-            assert skipped == bytePos;
-
-            if (index % Dictionary.BLOCK_SIZE == 0) {
-                return FirstBlockElement.deserialize(dis);
-            } else {
-                return OtherBlockElement.deserialize(dis);
-            }
-        } catch (IOException ex) {
-            throw new RuntimeException("Impossible, got IOException while operating on ByteArrayInputStream");
+        byteBuffer.position(bytePos);
+        if (index % Dictionary.BLOCK_SIZE == 0) {
+            return FirstBlockElement.deserialize(byteBuffer);
+        } else {
+            return OtherBlockElement.deserialize(byteBuffer);
         }
     }
 
