@@ -1,115 +1,78 @@
 package webdata.compression;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
-import java.nio.charset.CodingErrorAction;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-/** Responsible for decoding strings compressed via (k-1)-in-k front coding. */
-public class FrontCodingDecoder implements Closeable {
+/** Responsible for decoding strings compressed via (k-1)-in-k front coding.
+* */
+public class FrontCodingDecoder {
 
-    private final Charset charset;
-    private final CharsetDecoder charsetDecoder;
-    private InputStream is;
+    private final String string;
 
     private final int maxElements;
-    private int numElements = 0;
     private String prevWord;
 
-
-    // Initial size of buffer containing suffix
-    // (Buffer will be re-allocated with a larger size if
-    //  we happen to encounter a longer suffix)
-    private final int INITIAL_BUF_SIZE = 1024;
-
-    // Contains suffix
-    private ByteBuffer readBuf;
 
     /** Creates a (k-1)-in-k front coding decoder
      * @param maxElements 'k', the group size
      * @param charset Charset, used for encoding
-     * @param is Input stream aligned to the first expected group member
+     * @param path Path to terms
      */
-    public FrontCodingDecoder(int maxElements, Charset charset, InputStream is) {
-        this.charset = charset;
-        this.charsetDecoder = charset.newDecoder()
-                .onMalformedInput(CodingErrorAction.REPLACE)
-                .onUnmappableCharacter(CodingErrorAction.REPLACE);
-        this.is = is;
-        this.maxElements = maxElements;
-        this.numElements = 0;
-        this.prevWord = null;
-
-        this.readBuf = ByteBuffer.allocate(INITIAL_BUF_SIZE);
+    public FrontCodingDecoder(int maxElements, Charset charset, Path path) throws IOException {
+        this(maxElements, Files.readString(path, charset));
     }
 
-    private String decodeFirstElement(FrontCodingResult result) throws IOException {
-        assert result.prefixLengthChars == 0;
+    public FrontCodingDecoder(int maxElements, Charset charset, InputStream is) throws IOException {
+        var bytes = is.readAllBytes();
+        this.maxElements = maxElements;
+        this.string = charset.decode(ByteBuffer.wrap(bytes)).toString();
+        this.prevWord = null;
+    }
 
-        if (result.suffixLengthBytes > readBuf.capacity()) {
-            readBuf = ByteBuffer.allocate(result.suffixLengthBytes * 2);
-        }
-        int read = is.readNBytes(readBuf.array(), 0, result.suffixLengthBytes);
-        assert read == result.suffixLengthBytes;
+    public FrontCodingDecoder(int maxElements, String string) {
+        this.maxElements = maxElements;
+        this.string = string;
+        this.prevWord = null;
+    }
 
-        readBuf.position(0).limit(result.suffixLengthBytes);
-        String suffix = charsetDecoder.decode(readBuf).toString();
 
+    private String decodeFirstElement(FrontCodingResult result) {
+        assert result.prefixLength == 0;
+
+        String suffix = string.substring(result.suffixPos, result.suffixPos + result.suffixLength);
         this.prevWord = suffix;
         return suffix;
     }
 
-    private String decodeAnyOtherElement(FrontCodingResult result) throws IOException {
-        readBuf.clear();
-        var arr = readBuf.array();
-        for (int i=0; i < readBuf.capacity(); ++i) {
-            arr[i] = 0;
-        }
-
-        if (result.suffixLengthBytes > readBuf.capacity()) {
-            readBuf = ByteBuffer.allocate(result.suffixLengthBytes * 2);
-        }
-        int read = is.readNBytes(readBuf.array(), 0, result.suffixLengthBytes);
-        assert read == result.suffixLengthBytes;
-
-
-        String prefix = prevWord.substring(0, result.prefixLengthChars);
-        readBuf.position(0).limit(result.suffixLengthBytes);
-        String suffix = charsetDecoder.decode(readBuf).toString();
+    private String decodeAnyOtherElement(FrontCodingResult result) {
+        String prefix = prevWord.substring(0, result.prefixLength);
+        String suffix = string.substring(result.suffixPos, result.suffixPos + result.suffixLength);
 
         this.prevWord = prefix + suffix;
         return this.prevWord;
     }
 
-    /** Resets the current group, starting a new group assumed to begin at given input stream,
-     *  and closes the previous input stream. */
-    public void reset(InputStream is) throws IOException {
-        this.is.close();
-        this.numElements = 0;
-        this.prevWord = null;
-        this.is = is;
-    }
-
-    /** Decodes the next word iwthin the current group(or the first one if this
-     *  is the group start) using the given front coding result.
+    /** Tries decoding an element within a group
+     * @param result Contains information for decoding
+     * @param posInGroup Index within group
+     * @return Decoded element
      */
-    public String decodeElement(FrontCodingResult result) throws IOException {
+    public String decodeElement(FrontCodingResult result, int posInGroup) {
         String ret;
-        if (numElements % maxElements == 0) {
+        if (posInGroup % maxElements == 0) {
             ret = decodeFirstElement(result);
         } else {
             ret = decodeAnyOtherElement(result);
         }
-        ++numElements;
         return ret;
     }
 
-    @Override
-    public void close() throws IOException {
-        this.is.close();
+    /** Returns the string backing this decoder */
+    public String getString() {
+        return string;
     }
 }

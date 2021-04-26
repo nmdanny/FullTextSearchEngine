@@ -29,25 +29,27 @@ class FrontCodingEncoderTest {
 
         var res1 = encoder.encodeString("jezebel");
 
-        assertEquals(0, res1.prefixLengthChars);
-        assertEquals("jezebel".length(), res1.suffixLengthBytes);
+        assertEquals(0, res1.prefixLength);
+        assertEquals("jezebel".length(), res1.suffixLength);
 
         var res2 = encoder.encodeString("jezer");
-        assertEquals(4, res2.prefixLengthChars);
-        assertEquals(1, res2.suffixLengthBytes);
+        assertEquals(4, res2.prefixLength);
+        assertEquals(1, res2.suffixLength);
 
         var res3 = encoder.encodeString("jezerit");
-        assertEquals(5, res3.prefixLengthChars);
-        assertEquals(2, res3.suffixLengthBytes);
+        assertEquals(5, res3.prefixLength);
+        assertEquals(2, res3.suffixLength);
 
         var res4 = encoder.encodeString("jeziah");
-        assertEquals(3, res4.prefixLengthChars);
-        assertEquals(3, res4.suffixLengthBytes);
+        assertEquals(3, res4.prefixLength);
+        assertEquals(3, res4.suffixLength);
 
 
         var res5 = encoder.encodeString("jeziel");
-        assertEquals(0, res5.prefixLengthChars);
-        assertEquals(6, res5.suffixLengthBytes);
+        assertEquals(0, res5.prefixLength);
+        assertEquals(6, res5.suffixLength);
+
+        encoder.close();
 
         var expectedStreamEncoding = charset.encode("jezebelritiahjeziel");
         assertArrayEquals(expectedStreamEncoding.array(), os.toByteArray());
@@ -55,19 +57,18 @@ class FrontCodingEncoderTest {
         var is = new ByteArrayInputStream(os.toByteArray());
         var decoder = new FrontCodingDecoder(maxPrefixes, charset, is);
 
-        assertEquals("jezebel", decoder.decodeElement(res1));
-        assertEquals("jezer", decoder.decodeElement(res2));
-        assertEquals("jezerit", decoder.decodeElement(res3));
-        assertEquals("jeziah", decoder.decodeElement(res4));
-        assertEquals("jeziel", decoder.decodeElement(res5));
+        assertEquals("jezebel", decoder.decodeElement(res1, 0));
+        assertEquals("jezer", decoder.decodeElement(res2, 1));
+        assertEquals("jezerit", decoder.decodeElement(res3, 2));
+        assertEquals("jeziah", decoder.decodeElement(res4, 3));
+        assertEquals("jeziel", decoder.decodeElement(res5, 0));
 
         // ensure resetting works
-        decoder.reset(new ByteArrayInputStream(os.toByteArray()));
-        assertEquals("jezebel", decoder.decodeElement(res1));
-        assertEquals("jezer", decoder.decodeElement(res2));
-        assertEquals("jezerit", decoder.decodeElement(res3));
-        assertEquals("jeziah", decoder.decodeElement(res4));
-        assertEquals("jeziel", decoder.decodeElement(res5));
+        assertEquals("jezebel", decoder.decodeElement(res1, 0));
+        assertEquals("jezer", decoder.decodeElement(res2, 1));
+        assertEquals("jezerit", decoder.decodeElement(res3, 2));
+        assertEquals("jeziah", decoder.decodeElement(res4, 3));
+        assertEquals("jeziel", decoder.decodeElement(res5, 0));
     }
 
     static Stream<List<String>> groupsProvider() {
@@ -89,12 +90,12 @@ class FrontCodingEncoderTest {
         for (var string: strings) {
             results.add(encoder.encodeString(string));
         }
-
+        encoder.close();
         var is = new ByteArrayInputStream(os.toByteArray());
         var decoder = new FrontCodingDecoder(maxPrefixes, charset, is);
 
         for (int i=0; i < strings.size(); ++i) {
-            assertEquals(strings.get(i), decoder.decodeElement(results.get(i)));
+            assertEquals(strings.get(i), decoder.decodeElement(results.get(i), i % maxPrefixes));
         }
     }
 }

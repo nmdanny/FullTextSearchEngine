@@ -4,18 +4,18 @@ package webdata.compression;
  *  information that allows decoding it.
  */
 public class FrontCodingResult {
-    public final long suffixPos;
-    public final int prefixLengthChars;
-    public final int suffixLengthBytes;
+    public final int suffixPos;
+    public final int prefixLength;
+    public final int suffixLength;
 
     /**
      * @param suffixPos    Byte position where suffix starts
-     * @param prefixLengthChars Length of the prefix (in chars!)
-     * @param suffixLengthBytes Length of the suffix (in bytes)
+     * @param prefixLength Length of the prefix
+     * @param suffixLength Length of the suffix
      */
-    public FrontCodingResult(long suffixPos, int prefixLengthChars, int suffixLengthBytes) {
+    public FrontCodingResult(int suffixPos, int prefixLength, int suffixLength) {
         this.suffixPos = suffixPos;
-        this.prefixLengthChars = prefixLengthChars;
-        this.suffixLengthBytes = suffixLengthBytes;
+        this.prefixLength = prefixLength;
+        this.suffixLength = suffixLength;
     }
 }

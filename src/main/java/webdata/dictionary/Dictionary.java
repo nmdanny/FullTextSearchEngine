@@ -8,6 +8,7 @@ import webdata.compression.GroupVarintDecoder;
 import webdata.inverted_index.PostingListReader;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,7 +22,7 @@ public class Dictionary {
 
     private final String dir;
 
-    private PackedDictionaryElements elements;
+    private final PackedDictionaryElements elements;
     static final int BLOCK_SIZE = 4;
 
     private final PostingListReader postingListReader;
@@ -30,9 +31,6 @@ public class Dictionary {
     // Contains the terms
     static final String TERMS_FILE_NAME = "terms.txt";
     static final Charset TERMS_FILE_ENCODING = StandardCharsets.UTF_8;
-
-    private final byte[] termsBuf;
-    private ByteArrayInputStream termsIs;
     private final FrontCodingDecoder decoder;
 
     // Contains the dictionary elements
@@ -43,9 +41,9 @@ public class Dictionary {
     // Contains the postings
     static final String POSTINGS_FILE_NAME = "postings.bin";
 
-    private int totalNumberOfTokens;
-    private int uniqueNumberOfTokens;
-    private int numberDocIdFreqPairs;
+    private final long totalNumberOfTokens;
+    private final int uniqueNumberOfTokens;
+    private final long numberDocIdFreqPairs;
 
     /**
      * @param dir Directory of index files
@@ -54,48 +52,32 @@ public class Dictionary {
     public Dictionary(String dir) throws IOException {
         this.dir = dir;
 
-//        if (Files.exists(Path.of(dir, DICTIONARY_FILE_NAME)) && Files.exists(Path.of(dir, POSTINGS_FILE_NAME))) {
+        try (var statsIs = new BufferedInputStream(new FileInputStream(Path.of(dir, DICTIONARY_STATS_FILE).toString()));
+             var elementsIs = new BufferedInputStream(new FileInputStream(Path.of(dir, DICTIONARY_FILE_NAME).toString()));
+             var statsDis = new DataInputStream(statsIs);
+             var elementsDis = new DataInputStream(elementsIs)
+             )
+        {
+//            this.totalNumberOfTokens = statsDis.readLong();
+            this.totalNumberOfTokens = statsDis.readInt();
+            this.uniqueNumberOfTokens = statsDis.readInt();
+//            this.numberDocIdFreqPairs = statsDis.readLong();
+            this.numberDocIdFreqPairs = statsDis.readInt();
+            assert uniqueNumberOfTokens <= totalNumberOfTokens;
+//            assert numberDocIdFreqPairs >= uniqueNumberOfTokens;
+//            assert numberDocIdFreqPairs <= totalNumberOfTokens;
+        elements = new PackedDictionaryElements(elementsDis, uniqueNumberOfTokens);
 
-        deserialize();
+            assert uniqueNumberOfTokens == elements.size();
+        }
+
         this.postingListReader = new PostingListReader(Path.of(dir, POSTINGS_FILE_NAME).toString());
-
-        this.termsBuf  = Files.readAllBytes(Paths.get(dir, TERMS_FILE_NAME));
-        this.termsIs = new ByteArrayInputStream(this.termsBuf);
 
         this.decoder = new FrontCodingDecoder(
                 Dictionary.BLOCK_SIZE,
                 Dictionary.TERMS_FILE_ENCODING,
-                this.termsIs
+                Path.of(dir, TERMS_FILE_NAME)
         );
-    }
-
-    public void deserialize(DataInputStream statsIs, DataInputStream elementsIs) throws IOException {
-        // read constant statistics
-        totalNumberOfTokens = statsIs.readInt();
-        uniqueNumberOfTokens = statsIs.readInt();
-        numberDocIdFreqPairs = statsIs.readInt();
-        assert uniqueNumberOfTokens <= totalNumberOfTokens;
-        assert numberDocIdFreqPairs >= uniqueNumberOfTokens;
-        assert numberDocIdFreqPairs <= totalNumberOfTokens;
-        elements = new PackedDictionaryElements(elementsIs, uniqueNumberOfTokens);
-    }
-
-    public void deserialize() throws IOException {
-        var statsIs = new DataInputStream(
-                new BufferedInputStream(
-                        new FileInputStream(Path.of(dir, DICTIONARY_STATS_FILE).toString())
-                )
-        );
-
-        var elementsIs = new DataInputStream(
-                new BufferedInputStream(
-                        new FileInputStream(Path.of(dir, DICTIONARY_FILE_NAME).toString())
-                )
-        );
-
-        deserialize(statsIs, elementsIs);
-        statsIs.close();
-        elementsIs.close();
     }
 
     /** Returns the term of this element, assuming its index is known */
@@ -117,15 +99,10 @@ public class Dictionary {
                 firstBlockElement.suffixLength
         );
 
-        this.termsIs = new ByteArrayInputStream(this.termsBuf);
-        long skipped = this.termsIs.skip(frontCodingResult.suffixPos);
-        assert skipped == frontCodingResult.suffixPos;
-        decoder.reset(this.termsIs);
-
-        String term = decoder.decodeElement(frontCodingResult);
+        String term = decoder.decodeElement(frontCodingResult, 0);
 
         // now, iterate over the rest of the blocks if the position in the block isn't 0
-        long curSuffixPos = frontCodingResult.suffixPos + frontCodingResult.suffixLengthBytes;
+        int curSuffixPos = frontCodingResult.suffixPos + frontCodingResult.suffixLength;
         for (int curIndex = index - posInBlock + 1; curIndex <= index; ++curIndex) {
             var otherBlockElement = (OtherBlockElement)this.elements.get(curIndex);
             frontCodingResult = new FrontCodingResult(
@@ -133,8 +110,8 @@ public class Dictionary {
                     otherBlockElement.prefixLength,
                     otherBlockElement.suffixLength
             );
-            term = decoder.decodeElement(frontCodingResult);
-            curSuffixPos += frontCodingResult.suffixLengthBytes;
+            term = decoder.decodeElement(frontCodingResult, curIndex % BLOCK_SIZE);
+            curSuffixPos += frontCodingResult.suffixLength;
         }
 
         return term;
@@ -187,7 +164,7 @@ public class Dictionary {
 
     /** Returns the number of tokens(including repetitions) seen in the dictionary */
     public int getTotalNumberOfTokens() {
-        return totalNumberOfTokens;
+        return (int)totalNumberOfTokens;
     }
 
     /** Returns the number of different tokens in the dictionary.  */
@@ -209,38 +186,33 @@ public class Dictionary {
 
             final FrontCodingDecoder decoder = new FrontCodingDecoder(
                     Dictionary.BLOCK_SIZE,
-                    Dictionary.TERMS_FILE_ENCODING,
-                    new ByteArrayInputStream(termsBuf)
+                    Dictionary.this.decoder.getString()
             );
 
             @Override
             public boolean tryAdvance(Consumer<? super Map.Entry<String, Integer>> action) {
                 return dictElements.tryAdvance(element -> {
-                    try {
-                        if (dictIndex % BLOCK_SIZE == 0) {
-                            var firstBlockElement = (FirstBlockElement)element;
-                            var frontCodingResult = new FrontCodingResult(
-                                    firstBlockElement.suffixPos,
-                                    0,
-                                    firstBlockElement.suffixLength
-                            );
-                            curSuffixPos = firstBlockElement.suffixPos + firstBlockElement.suffixLength;
-                            curPrefix = decoder.decodeElement(frontCodingResult);
-                        } else {
-                            var otherBlockElement = (OtherBlockElement)element;
-                            var frontCodingResult = new FrontCodingResult(
-                                    curSuffixPos,
-                                    otherBlockElement.prefixLength,
-                                    otherBlockElement.suffixLength
-                            );
-                            curSuffixPos += frontCodingResult.suffixLengthBytes;
-                            curPrefix = decoder.decodeElement(frontCodingResult);
-                        }
-                        action.accept(new AbstractMap.SimpleEntry<>(curPrefix, element.getTokenFrequency()));
-                        ++dictIndex;
-                    } catch (IOException ex) {
-                        throw new RuntimeException("Impossible, IO error dealing with byte arrays", ex);
+                    if (dictIndex % BLOCK_SIZE == 0) {
+                        var firstBlockElement = (FirstBlockElement)element;
+                        var frontCodingResult = new FrontCodingResult(
+                                firstBlockElement.suffixPos,
+                                0,
+                                firstBlockElement.suffixLength
+                        );
+                        curSuffixPos = firstBlockElement.suffixPos + firstBlockElement.suffixLength;
+                        curPrefix = decoder.decodeElement(frontCodingResult, 0);
+                    } else {
+                        var otherBlockElement = (OtherBlockElement)element;
+                        var frontCodingResult = new FrontCodingResult(
+                                curSuffixPos,
+                                otherBlockElement.prefixLength,
+                                otherBlockElement.suffixLength
+                        );
+                        curSuffixPos += frontCodingResult.suffixLength;
+                        curPrefix = decoder.decodeElement(frontCodingResult, dictIndex % BLOCK_SIZE);
                     }
+                    action.accept(new AbstractMap.SimpleEntry<>(curPrefix, element.getTokenFrequency()));
+                    ++dictIndex;
                 });
             }
         };
@@ -248,7 +220,7 @@ public class Dictionary {
 
     /** Returns a spliterator over all tokens in the dictionary, sorted by terms, followed by docIDs */
     public Spliterator<Token> tokens() throws IOException {
-        int sizeHint = numberDocIdFreqPairs;
+        long sizeHint = numberDocIdFreqPairs;
         int characteristics = Spliterator.SIZED | Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.DISTINCT;
 
         return new Spliterators.AbstractSpliterator<Token>(sizeHint, characteristics) {

@@ -3,17 +3,14 @@ package webdata.compression;
 import java.io.*;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
-import java.nio.charset.CodingErrorAction;
 
 /** Responsible for encoding strings using (k-1)-in-k front coding */
 public class FrontCodingEncoder implements Closeable, Flushable {
     private final Charset charset;
-    private final CharsetEncoder charsetEncoder;
-    private final OutputStream os;
+    private final OutputStreamWriter writer;
     private final int maxElements;
 
-    private long numBytesWritten;
+    private int numCharsWritten;
     private int numElements;
     private String curPrefix;
 
@@ -25,27 +22,20 @@ public class FrontCodingEncoder implements Closeable, Flushable {
      */
     public FrontCodingEncoder(int maxElements, Charset charset, OutputStream os) {
         this.charset = charset;
-        this.charsetEncoder = charset.newEncoder()
-                .onMalformedInput(CodingErrorAction.REPLACE)
-                .onUnmappableCharacter(CodingErrorAction.REPLACE);
-        this.os = os;
+        this.writer = new OutputStreamWriter(os, charset);
         this.maxElements = maxElements;
 
-        this.numBytesWritten = 0;
+        this.numCharsWritten = 0;
         this.numElements = 0;
         this.curPrefix = "";
     }
 
     private FrontCodingResult startNewPrefix(String string) throws IOException {
-        var bytes = charsetEncoder.encode(CharBuffer.wrap(string));
-
-        long pos = numBytesWritten;
-        int suffixLengthBytes = bytes.limit();
-
-        os.write(bytes.array(), 0, suffixLengthBytes);
-        numBytesWritten += suffixLengthBytes;
-
-        return new FrontCodingResult(pos, 0, suffixLengthBytes);
+        int pos = numCharsWritten;
+        int suffixLength = string.length();
+        writer.write(string);
+        numCharsWritten += suffixLength;
+        return new FrontCodingResult(pos, 0, suffixLength);
     }
 
     private int greatestCommonPrefix(String a, String b) {
@@ -63,14 +53,15 @@ public class FrontCodingEncoder implements Closeable, Flushable {
 
     private FrontCodingResult addWithPrefix(String string) throws IOException {
         int prefixLength = greatestCommonPrefix(string, curPrefix);
-        var suffixBytes = charsetEncoder.encode(CharBuffer.wrap(string, prefixLength, string.length()));
-        long pos = numBytesWritten;
-        int suffixLengthBytes = suffixBytes.limit();
 
-        os.write(suffixBytes.array(), 0, suffixLengthBytes);
-        numBytesWritten += suffixLengthBytes;
+        var suffix = string.substring(prefixLength);
 
-        return new FrontCodingResult(pos, prefixLength, suffixLengthBytes);
+        int pos = numCharsWritten;
+
+        writer.write(suffix);
+        numCharsWritten += suffix.length();
+
+        return new FrontCodingResult(pos, prefixLength, suffix.length());
     }
 
     /** Encodes a new string, returning information that can be used to decode it via front coding */
@@ -91,12 +82,12 @@ public class FrontCodingEncoder implements Closeable, Flushable {
 
     @Override
     public void flush() throws IOException {
-        os.flush();
+        writer.flush();
     }
 
     @Override
     public void close() throws IOException {
         flush();
-        os.close();
+        writer.close();
     }
 }
