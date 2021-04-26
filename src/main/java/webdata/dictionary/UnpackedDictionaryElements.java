@@ -13,11 +13,13 @@ class UnpackedDictionaryElements extends AbstractList<DictionaryElement> {
 
     UnpackedDictionaryElements(DataInputStream dis, int numElements) throws IOException {
         elements = new ArrayList<>(numElements);
+        FirstBlockElement lastFbe = null;
         for (int elementNum = 0; elementNum < numElements; ++elementNum) {
             if (elementNum % Dictionary.BLOCK_SIZE == 0) {
-                elements.add(FirstBlockElement.deserialize(dis));
+                lastFbe = FirstBlockElement.deserialize(dis);
+                elements.add(lastFbe);
             } else {
-                elements.add(OtherBlockElement.deserialize(dis));
+                elements.add(OtherBlockElement.deserialize(lastFbe, dis));
             }
         }
     }

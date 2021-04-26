@@ -19,12 +19,16 @@ public class PostingListReader {
     }
 
     /** Returns the posting list as a stream of docIds and frequencies */
-    public Enumeration<Integer> readDocIdFreqPairs(int postingPtr, int frequency) throws IOException {
+    public Enumeration<Integer> readDocIdFreqPairs(long postingPtr, int frequency) throws IOException {
         assert frequency > 0;
+        assert postingPtr >= 0 : "Posting pointer must be non-negative";
 
         // TODO: maybe re-use file, need to check if enumeration will be used concurrently
         var raf = new RandomAccessFile(filePath, "r");
         var fileChannel = raf.getChannel();
+
+        assert postingPtr < fileChannel.size() : "Posting pointer invalid, bigger than file size";
+
         fileChannel.position(postingPtr);
         var stream = new BufferedInputStream(Channels.newInputStream(fileChannel));
         final var decoder = new GroupVarintDecoder(stream);

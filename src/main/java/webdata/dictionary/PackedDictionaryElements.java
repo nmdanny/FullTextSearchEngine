@@ -26,14 +26,16 @@ class PackedDictionaryElements extends AbstractList<DictionaryElement> {
         int numFirstBlockElement = 0;
         int numOtherBlockElement = 0;
 
+        FirstBlockElement lastFbe = null;
         try (   var byteArrayOs = new ByteArrayOutputStream();
                 var dos = new DataOutputStream(byteArrayOs)) {
             for (int elementNum = 0; elementNum < numElements; ++elementNum) {
                 if (elementNum % Dictionary.BLOCK_SIZE == 0) {
-                    FirstBlockElement.deserialize(dis).serialize(dos);
+                    lastFbe = FirstBlockElement.deserialize(dis);
+                    lastFbe.serialize(dos);
                     ++numFirstBlockElement;
                 } else {
-                    OtherBlockElement.deserialize(dis).serialize(dos);
+                    OtherBlockElement.deserialize(lastFbe, dis).serialize(dos);
                     ++numOtherBlockElement;
                 }
             }
@@ -71,14 +73,17 @@ class PackedDictionaryElements extends AbstractList<DictionaryElement> {
 
         int blockIx = index / Dictionary.BLOCK_SIZE;
         int posInBlock = index % Dictionary.BLOCK_SIZE;
-        int bytePos = getByteIndexOfBlockBeginning(blockIx) + getByteOffsetOfElementInBlock(posInBlock);
+        int bytePosOfBeginning = getByteIndexOfBlockBeginning(blockIx);
+        int byteOffsetOfElementInBlock = getByteOffsetOfElementInBlock(posInBlock);
 
 
-        byteBuffer.position(bytePos);
-        if (index % Dictionary.BLOCK_SIZE == 0) {
-            return FirstBlockElement.deserialize(byteBuffer);
+        byteBuffer.position(bytePosOfBeginning);
+        var fbe = FirstBlockElement.deserialize(byteBuffer);
+        if (byteOffsetOfElementInBlock == 0) {
+            return fbe;
         } else {
-            return OtherBlockElement.deserialize(byteBuffer);
+            byteBuffer.position(bytePosOfBeginning + byteOffsetOfElementInBlock);
+            return OtherBlockElement.deserialize(fbe, byteBuffer);
         }
     }
 
@@ -89,12 +94,13 @@ class PackedDictionaryElements extends AbstractList<DictionaryElement> {
 
     /** A spliterator over all elements in this dictionary */
     public Spliterator<DictionaryElement> dictionaryElementsSpliterator() {
-        long numElements = size();
+        int numElements = size();
         int characteristics = Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.SIZED;
         return new Spliterators.AbstractSpliterator<DictionaryElement>(numElements, characteristics) {
             int elemIx = 0;
             final ByteArrayInputStream bais = new ByteArrayInputStream(packedBytes);
             final DataInputStream dis = new DataInputStream(bais);
+            FirstBlockElement lastFbe = null;
 
             @Override
             public boolean tryAdvance(Consumer<? super DictionaryElement> action) {
@@ -104,9 +110,10 @@ class PackedDictionaryElements extends AbstractList<DictionaryElement> {
                 try {
                     DictionaryElement element;
                     if (elemIx % Dictionary.BLOCK_SIZE == 0) {
-                        element = FirstBlockElement.deserialize(dis);
+                        lastFbe = FirstBlockElement.deserialize(dis);
+                        element = lastFbe;
                     } else {
-                        element = OtherBlockElement.deserialize(dis);
+                        element = OtherBlockElement.deserialize(lastFbe, dis);
                     }
                     action.accept(element);
                     ++elemIx;

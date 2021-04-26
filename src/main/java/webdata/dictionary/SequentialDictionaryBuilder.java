@@ -19,12 +19,14 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
     private final FrontCodingEncoder encoder;
 
     private String curTerm;
-    private int curTermPostingPtr;
+    private long curTermPostingPtr;
     private int lastDocId;
     private int lastDocFreq;
-    private int totalNumberOfTokens;
+    private long totalNumberOfTokens;
     private int uniqueNumberOfTokens;
-    private int numberDocIdFreqPairs;
+    private long numberDocIdFreqPairs;
+
+    private FirstBlockElement lastFbe;
 
     public SequentialDictionaryBuilder(String dir) throws IOException {
         this.dir = dir;
@@ -89,25 +91,29 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
 
         var frontCodingResult = encoder.encodeString(postingListWriter.getCurrentTerm());
 
-        assert (frontCodingResult.suffixPos <= Integer.MAX_VALUE) : "Can only support terms file with 2^31 entries";
+        assert (frontCodingResult.suffixPos >= 0) : "Can only support terms file with 2^31 chars";
 
         // begin a new block
         if (uniqueNumberOfTokens % Dictionary.BLOCK_SIZE == 0) {
-            assert frontCodingResult.prefixLengthChars == 0;
+            assert frontCodingResult.prefixLength == 0;
             var element = new FirstBlockElement(
                     postingListWriter.getCurrentTermDocumentFrequency(),
                     curTermPostingPtr,
-                    frontCodingResult.suffixLengthBytes,
-                    (int)frontCodingResult.suffixPos
+                    frontCodingResult.suffixLength,
+                    frontCodingResult.suffixPos
             );
             element.serialize(elementsDos);
+            this.lastFbe = element;
         } else {
             // add to previous block
+            long gap = curTermPostingPtr - this.lastFbe.postingPtr;
+            assert ((int) gap == gap) : "Posting pointer gap within block can be at most 2^31";
             var element = new OtherBlockElement(
+                    this.lastFbe,
                     postingListWriter.getCurrentTermDocumentFrequency(),
-                    curTermPostingPtr,
-                    frontCodingResult.prefixLengthChars,
-                    frontCodingResult.suffixLengthBytes
+                    (int)gap,
+                    frontCodingResult.prefixLength,
+                    frontCodingResult.suffixLength
             );
             element.serialize(elementsDos);
         }
@@ -159,9 +165,9 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
         var statFile = Paths.get(dir, Dictionary.DICTIONARY_STATS_FILE).toFile();
         try (var statsFos = new BufferedOutputStream(new FileOutputStream(statFile, false));
              var statsOs = new DataOutputStream(statsFos)) {
-            statsOs.writeInt(totalNumberOfTokens);
+            statsOs.writeLong(totalNumberOfTokens);
             statsOs.writeInt(uniqueNumberOfTokens);
-            statsOs.writeInt(numberDocIdFreqPairs);
+            statsOs.writeLong(numberDocIdFreqPairs);
             statsOs.flush();
         }
     }

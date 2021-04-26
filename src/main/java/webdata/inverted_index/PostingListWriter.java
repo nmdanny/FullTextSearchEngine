@@ -14,7 +14,7 @@ public class PostingListWriter implements Closeable, Flushable {
     private int lastDocId;
     private String curTerm;
     private int curDocumentFrequency;
-    private int curPostingPtr;
+    private long curPostingPtr;
 
     /**
      * Creates a writer for posting lists
@@ -59,7 +59,7 @@ public class PostingListWriter implements Closeable, Flushable {
 
     /** Resets the writer for writing a new posting list(or the first one), and returns a
      *  pointer to said posting list.*/
-    public int startTerm(String term) throws IOException
+    public long startTerm(String term) throws IOException
     {
         // If we already wrote a posting list, ensure the last group was written
         encoder.finishPreviousGroup();
@@ -67,9 +67,7 @@ public class PostingListWriter implements Closeable, Flushable {
         lastDocId = 0;
         curTerm = term;
         curDocumentFrequency = 0;
-        long pos = encoder.getTotalNumBytesWritten();
-        assert ((int)pos == pos) : String.format("Posting pointer for term %s is too large at %d, doesn't fit in an int", term, pos);
-        curPostingPtr = (int)pos;
+        curPostingPtr = encoder.getTotalNumBytesWritten();
         return curPostingPtr;
     }
 

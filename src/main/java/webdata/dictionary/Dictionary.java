@@ -58,15 +58,13 @@ public class Dictionary {
              var elementsDis = new DataInputStream(elementsIs)
              )
         {
-//            this.totalNumberOfTokens = statsDis.readLong();
-            this.totalNumberOfTokens = statsDis.readInt();
+            this.totalNumberOfTokens = statsDis.readLong();
             this.uniqueNumberOfTokens = statsDis.readInt();
-//            this.numberDocIdFreqPairs = statsDis.readLong();
-            this.numberDocIdFreqPairs = statsDis.readInt();
+            this.numberDocIdFreqPairs = statsDis.readLong();
             assert uniqueNumberOfTokens <= totalNumberOfTokens;
-//            assert numberDocIdFreqPairs >= uniqueNumberOfTokens;
-//            assert numberDocIdFreqPairs <= totalNumberOfTokens;
-        elements = new PackedDictionaryElements(elementsDis, uniqueNumberOfTokens);
+            assert numberDocIdFreqPairs >= uniqueNumberOfTokens;
+            assert numberDocIdFreqPairs <= totalNumberOfTokens;
+            elements = new PackedDictionaryElements(elementsDis, uniqueNumberOfTokens);
 
             assert uniqueNumberOfTokens == elements.size();
         }

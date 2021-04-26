@@ -59,7 +59,7 @@ public class PostingListsTest {
 
         var writer = new PostingListWriter(bufOs);
 
-        Map<String, Integer> termToPostingPtr = new HashMap<>();
+        Map<String, Long> termToPostingPtr = new HashMap<>();
 
         for (var entry: docIds.entrySet()) {
             var pointer = writer.startTerm(entry.getKey());

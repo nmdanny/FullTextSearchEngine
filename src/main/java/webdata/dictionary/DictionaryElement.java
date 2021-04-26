@@ -1,6 +1,5 @@
 package webdata.dictionary;
 
-import java.nio.CharBuffer;
 
 /** Represents a dictionary element. All these getters should be O(1) and avoid IO. */
 interface DictionaryElement {
@@ -9,5 +8,5 @@ interface DictionaryElement {
     int getTokenFrequency();
 
     /** Gets a pointer to the postings list of this term. */
-    int getPostingsPointer();
+    long getPostingsPointer();
 }
