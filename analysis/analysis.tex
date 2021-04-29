@@ -40,11 +40,17 @@ Here are some diagrams which summarize the structure of the index. Read below fo
 \subsection{Dictionary}
 
 The dictionary uses (k-1)-in-k front-coding for compression, containing blocks of constant size, each block containing \verb+BLOCK SIZE+ terms
-encoded via front-coding.
+encoded via front-coding. (I chose a block size of 4, for no particular reason)
 
-Each element in the block contains the token document frequency(length of posting list) and a posting pointer, in addition, the first block element
-contains a suffix pointer and suffix length (allowing de-referencing its term), and every other block element contains a prefix length and suffix length. \footnote{In class we store the entire token's length rather than the suffix length. Overall this doesn't matter because 
+Each element in the block contains the token document frequency(length of posting list) and a posting pointer(if this is the first element), or the gap from the posting pointer of the first element for any other element.
+
+A full posting pointer is 8 bytes (As the posting file for the largest dataset, \texttt{all.txt}, even with compression, uses about 8 GB, which
+don't fit in an int), whereas an offset is 4 bytes. (In practice, probably a lot less, but this depends on the maximal posting list length)
+
+In addition, the first block element contains a suffix pointer and suffix length (allowing de-referencing its term), and every other block element contains a prefix length and suffix length. \footnote{In class we store the entire token's length rather than the suffix length. Overall this doesn't matter because 
 	$\text{length} = \text{suffixLength} + \text{prefixLength}$}
+
+
 
 Since other block elements do not include a suffix pointer, we need to de-reference every previous term in a block in order to determine the suffix
 pointer. (Formally, $\texttt{suffixPointer}_i = \texttt{suffixPointer}_{i-1} + \texttt{suffixLength}_{i-1}$)
@@ -53,28 +59,14 @@ This implies a space-time trade-off with regards to block size, a higher block s
 search time.
 
 
-There are a couple of optimizations that \textbf{I did not yet implement} due to time constraints:
-
-\begin{itemize}
-
-\item Shrinking suffix and prefix lengths, perhaps instead of using 4 bytes, 2 bytes or even 1 byte would suffice. I hypothesize that in a 
-  large data-set these would be smaller, but this depends on the token distribution, average token length and other statistics..
-  
-  (I might implement this in the next exercise if I find this to be necessary)
-  
-\item Omitting the suffix length of the last block element, as it can probably be derived using the suffix pointer of the first element in the next block.
-  
-  Not implemented because the saving's don't seem particularly worthwhile and it just complicates the code
-  
-\end{itemize}
+There are a couple of optimizations that I did not yet implement due to time constraints,such as omitting the suffix length of the last block element, as it can probably be derived using the suffix pointer of the first element in the next block, but doing so just complicates the code and the benefits don't
+seem particulary big. Another option is to shrink the suffix/prefix lengths, maybe using 2 or even 1 byte - this would depend on the statistics of
+the dataset, I hypothesize that for a large dataset these lengths would tend to be smaller.
 
 
 One important optimization that I did implement, is the use of a "packed" array (see class \verb+PackedDictionaryElements+), instead of
 storing these blocks as plain Java objects, they are stored as bytes. This saves a lot of memory that would otherwise be wasted on object headers, at
 cost of higher running time when reading those bytes as objects when trying to retrieve an element from the dictionary.
-
-Another optimization is that the tokens(suffixes) aren't encoded in Java's UTF-16, rather, they use UTF-8, which should halve the memory
-usage for data-sets which mostly use the Latin alphabet. This of course comes at a running-time cost when decoding the terms and translating them back into \verb+String+.
 
 In addition, two integers, total number of reviews and token collection frequency, which were calculated during parsing, are stored in a separate file,
 allowing $O(1)$ access.
