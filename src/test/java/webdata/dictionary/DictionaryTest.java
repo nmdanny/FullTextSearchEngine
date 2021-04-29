@@ -34,13 +34,17 @@ public class DictionaryTest {
 
         var pat = Pattern.compile("\\W++", Pattern.UNICODE_CHARACTER_CLASS);
         var indexer = new SPIMIIndexer(tempDir);
-        var tokens1 = Arrays.stream(pat.split("שרה שרה שיר שמח שיר שמח שרה שרה test"))
+        var tokens1M = Arrays.stream(pat.split("שרה שרה שיר שמח שיר שמח שרה שרה test"))
                 .filter(Predicate.not(String::isBlank))
-                .map(st -> new Token(st, 1, 1));
-        var tokens2 = Arrays.stream(pat.split("גנן גידל דגן בגן, דגן גדול גדל בגן test"))
-                .filter(Predicate.not(String::isBlank))
-                .map(st -> new Token(st, 2, 1));
+                .map(st -> new Token(st, 1, 1))
+                .collect(Collectors.groupingBy(Token::getTerm));
+        var tokens1 = tokens1M.entrySet().stream().map(kvp -> new Token(kvp.getKey(), 1, kvp.getValue().size()));
 
+        var tokens2M = Arrays.stream(pat.split("גנן גידל דגן בגן, דגן גדול גדל בגן test"))
+                .filter(Predicate.not(String::isBlank))
+                .map(st -> new Token(st, 2, 1))
+                .collect(Collectors.groupingBy(Token::getTerm));
+        var tokens2 = tokens2M.entrySet().stream().map(kvp -> new Token(kvp.getKey(), 2, kvp.getValue().size()));
         var tokens = Stream.concat(tokens1, tokens2);
         indexer.processTokens(tokens);
 
