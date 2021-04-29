@@ -11,11 +11,11 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.AbstractList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.RandomAccess;
 import java.util.stream.IntStream;
 
 /** Responsible for mapping between product IDs to pairs of docIDs representing ranges of reviews for said product
@@ -117,7 +117,7 @@ public class ProductIdToDocIdMapper extends AbstractList<ProductIdToDocIdMapper.
     //
     // This in turn allows us to use binary search with a string(a product ID) via Java's standard collection
     // methods.
-    private final AbstractList<String> abstractList = new AbstractList<String>() {
+    private class ProductIDAbstractList extends AbstractList<String> implements RandomAccess {
         @Override
         public String get(int index) {
             Pair pair = pairStorage.get(index);
@@ -132,7 +132,9 @@ public class ProductIdToDocIdMapper extends AbstractList<ProductIdToDocIdMapper.
         public int size() {
             return pairStorage.size();
         }
-    };
+    }
+
+    private final ProductIDAbstractList abstractList = new ProductIDAbstractList();
 
     /** If given productID wasn't seen, adds it to the storage, otherwise,
      *  updates the 'toDocIdInclusive' field of the entry corresponding to given element.

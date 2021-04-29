@@ -3,13 +3,14 @@ package webdata.dictionary;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.AbstractList;
+import java.util.RandomAccess;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 
 
 /** A packed list of dictionary elements in memory, allowing readonly list operations */
-class PackedDictionaryElements extends AbstractList<DictionaryElement> {
+class PackedDictionaryElements extends AbstractList<DictionaryElement> implements RandomAccess {
 
     private final byte[] packedBytes;
     // wraps packedBytes
@@ -93,7 +94,8 @@ class PackedDictionaryElements extends AbstractList<DictionaryElement> {
     }
 
     /** A spliterator over all elements in this dictionary */
-    public Spliterator<DictionaryElement> dictionaryElementsSpliterator() {
+    @Override
+    public Spliterator<DictionaryElement> spliterator() {
         int numElements = size();
         int characteristics = Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.SIZED;
         return new Spliterators.AbstractSpliterator<DictionaryElement>(numElements, characteristics) {

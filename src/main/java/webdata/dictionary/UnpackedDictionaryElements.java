@@ -4,10 +4,11 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.RandomAccess;
 
 /** An array of dictionary elements, very wasteful in terms of memory. Only
  *  for debugging/measuring purposes */
-class UnpackedDictionaryElements extends AbstractList<DictionaryElement> {
+class UnpackedDictionaryElements extends AbstractList<DictionaryElement> implements RandomAccess {
 
     private final ArrayList<DictionaryElement> elements;
 

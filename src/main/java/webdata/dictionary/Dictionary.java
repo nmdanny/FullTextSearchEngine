@@ -135,7 +135,8 @@ public class Dictionary {
     /** Allows treating the dictionary as a list of byte buffers(term encodings),
      *  allowing to perform binary search over them
      */
-    private final AbstractList<String> abstractList = new AbstractList<>() {
+    private class TermAbstractList extends AbstractList<String> implements RandomAccess
+    {
         @Override
         public int size() {
             return elements.size();
@@ -145,7 +146,8 @@ public class Dictionary {
         public String get(int index) {
             return getTerm(index);
         }
-    };
+    }
+    private final TermAbstractList abstractList = new TermAbstractList();
 
     /** Performs binary search over the dictionary in order to determine its index within the dictionary,
      * @param token Token
@@ -180,7 +182,7 @@ public class Dictionary {
             int dictIndex = 0;
             String curPrefix = null;
             int curSuffixPos = 0;
-            final Spliterator<DictionaryElement> dictElements = elements.dictionaryElementsSpliterator();
+            final Spliterator<DictionaryElement> dictElements = elements.spliterator();
 
             final FrontCodingDecoder decoder = new FrontCodingDecoder(
                     Dictionary.BLOCK_SIZE,
