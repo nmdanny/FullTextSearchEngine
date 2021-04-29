@@ -114,11 +114,15 @@ After merging, the final index takes \textbf{8.46 GB}. This means that during me
 
 For each of the previous data-sets, I've measured the total time to perform 100 requests to \texttt{getReviewsWithToken} or \texttt{getTokenFrequency}, by using 100 tokens chosen independently and uniformly from the entire set of tokens in the dataset.(Chosen for each data-set before timing began)
 
-The measurement of \texttt{getReviewsWithToken} included time taken to iterate the posting list itself. It wasn't much bigger than \texttt{getTokenFrequency} (which only includes the cost of binary search in the dictionary), probably because the randomly chosen tokens weren't
-particularly common. 
 
 The resulting plot can be seen \hyperref[fig:ops]{here}. I've repeated the same test(over the same few datasets) a couple of times to increase the
 confidence in the results. 
+
+Note that the X-axis is logarithmic. As we can see, \texttt{getTokenFrequency} runs in $O(\log N)$. For \texttt{getReviewsWithToken}, we see
+a similar trend at first, with a spike when dealing with larger datasets. The reason for this is that some of the tokens which are randomly chosen have
+long posting lists, so we can say the running time is $O(\log (N) + L)$ where $L$ is the average posting list length. (Moreover, scanning the posting lists
+uses disk IO, which is drastically slower than searching the in-memory dictionary)
+
 
 \begin{figure}[!htb]
 	\caption{Index query running times}
