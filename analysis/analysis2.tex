@@ -1,11 +1,14 @@
 \documentclass[11pt]{article}
 \usepackage{fullpage}
 \usepackage{graphicx}
+\usepackage{sidecap}
+\usepackage[export]{adjustbox}
 \usepackage{amsmath}
 \usepackage{wasysym}
 \usepackage{hyperref}
 \usepackage{comment}
 \usepackage{pdfpages}
+\usepackage[section]{placeins}
 \hypersetup{colorlinks=true, linkcolor=blue, bookmarks=true}
 
 \newtheorem{remark}{Remark}
@@ -42,37 +45,87 @@ which has the following statistics:
 	\item[Number of unique tokens] 413,742,857
 \end{description}
 
-Index creation was implemented using the SPIMI algorithm, and I've split the measurement into two stages:
+I've also tested a few smaller datasets which are included in this file.
+
+Index creation was implemented using the SPIMI(merge based) algorithm, and I've split the measurement into two stages:
 
 \begin{itemize}
 	\item Time taken by the "invert" stage (including parsing), where many temporary indices are created
 	\item Time taken to merge all indices and create the final index
 \end{itemize}
 
-And the results are summarized by the following plot:
 
-\includegraphics{runtime.pdf}
+\hyperref[fig:cumruntime]{Click here} to see the number of tokens processed as function of time, for each data-set
+
+\hyperref[fig:totalruntime]{Click here} to see the total time as function of the total reviews.
 
 
-The invert stage also included IO for filling the "compact storage" which includes reviews metadata (which is just filled sequentially as
-we encounter new documents, and doesn't require any sorting or special processing).
-Not included is the time taken to sort productID - docID pairs, containing the lowest \& highest review IDs per product.
-I've actually implemented this via an external sorting algorithm, but as it turns out, only 1 block was needed(the sort was performed entirely within memory), and finished in a couple seconds.
+\begin{SCfigure}[1][!htb]
+	\centering
+	\caption{Cumulative index construction time at various stages, plot for each dataset.
+	\\\hspace{\textwidth}
+	The invert stage also included IO for filling the "compact storage" which includes reviews metadata (which is just filled sequentially as
+	we encounter new documents, and doesn't require any sorting or special processing).
+	Not included is the time taken to sort productID - docID pairs, containing the lowest \& highest review IDs per product.
+	I've actually implemented this via an external sorting algorithm, but as it turns out, only 1 block was needed(the sort was performed entirely within memory), and finished in a couple seconds.
+	}
+	\label{fig:cumruntime}
+	\includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{runtime.pdf}
+\end{SCfigure}
 
-In total, it took about 8886 seconds to index this dataset, giving us a throughput of \textbf{4 MBps}
+
+\begin{figure}[!htb]
+	\caption{Total index construction running time}
+	\label{fig:totalruntime}
+	\centering
+	\includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{runtime2.pdf}
+\end{figure}
+
+
+
 
 \section{Disk usage}
 
-During the invert stage, 101 temporary indices were created, each taking around ~80-83 MB, and using a total of 8.35 GB, as summarized by the following plot:
+During the invert stage of \textbf{all.txt}, 15 temporary indices were created, each taking around ~540 MB, and using a total of 8 GB. In addition
+to the original dataset of 35 GB, this means we need a total disk usage of 43 GB, which implies a $22\%$ disk size overhead during index construction.
+\footnote{In theory, we could use something similar to 8 GB if we split the input file, and remove splits that we're processed, as we only go over the input once}
 
-\includegraphics{diskusage.pdf}
+\hyperref[fig:cumsize]{Click here} to see temporary index size(not final) for each dataset, as a function of time
 
-Therefore, during the invert stage, we need a total of 44.13 GB \footnote{In theory, we could use less if we split the input file, as we only go over
-	the input file once}, which means a $23\%$ overhead during index creation.
+\hyperref[fig:finalsize]{Click here} to see the final index size, as a function of total reviw count.
 
-After merging, the final index takes \textbf{8.47 GB}. This means that during merging, we use a total of 16.82 GB (adding up the temporary and final indices,
-but omitting the input files as they aren't needed at this point)
+After merging, the final index takes \textbf{8.46 GB}. This means that during merging, we use a total of 16.46 GB (adding up the temporary and final indices, but omitting the input files as they aren't needed at this point)
 
+\begin{figure}[!htb]
+	\caption{Cumulative temporary index size(not final) over time}
+	\label{fig:cumsize}
+	\centering
+	\includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{diskusage.pdf}
+\end{figure}
+
+\begin{figure}[!htb]
+	\caption{Final index size(not counting temporary or input files)}
+	\label{fig:finalsize}
+	\centering
+	\includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{diskusage2.pdf}
+\end{figure}
+
+\section{Index query operations}
+
+For each of the previous data-sets, I've measured the total time to perform 100 requests to \texttt{getReviewsWithToken} or \texttt{getTokenFrequency}, by using 100 tokens chosen independently and uniformly from the entire set of tokens in the dataset.(Chosen for each data-set before timing began)
+
+The measurement of \texttt{getReviewsWithToken} included time taken to iterate the posting list itself. It wasn't much bigger than \texttt{getTokenFrequency} (which only includes the cost of binary search in the dictionary), probably because the randomly chosen tokens weren't
+particularly common. 
+
+The resulting plot can be seen \hyperref[fig:ops]{here}. I've repeated the same test(over the same few datasets) a couple of times to increase the
+confidence in the results. 
+
+\begin{figure}[!htb]
+	\caption{Index query running times}
+	\label{fig:ops}
+	\centering
+	\includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{ops.pdf}
+\end{figure}
 
 
 \end{document}

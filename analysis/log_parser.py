@@ -10,6 +10,8 @@ MERGE_STATUS = re.compile("(\\[\\d+:\\d+.\\d+]).So far merged a total of ([\\d,]
 MADE_INDEX = re.compile("(\\[\\d+:\\d+.\\d+]) Finished creating temporary index at (.*)")
 TIME_FORMAT = "[%H:%M.%S]"
 
+NUM_REVIEWS = re.compile("^getNumberOfReviews: (\\d+)")
+
 
 def parse_log(lines):
     first_time = None
@@ -17,6 +19,7 @@ def parse_log(lines):
     index_entries = []
     total_tokens = 0
     total_indices_size = 0
+    total_num_reviews = 0
     for line in lines:
         invert = INVERT_STATUS.match(line)
         if invert:
@@ -33,7 +36,8 @@ def parse_log(lines):
             ttime = index.group(1)
             ttime = datetime.strptime(ttime, TIME_FORMAT)
             delta = ttime - first_time
-            index_path = index.group(2).replace("all", "all_good_seq_parser")
+            # index_path = index.group(2).replace("all", "all_good_seq_parser")
+            index_path = index.group(2)
             index_path = Path(index_path)
             cur_index_size = sum(f.stat().st_size for f in index_path.glob('**/*') if f.is_file())
             total_indices_size += cur_index_size
@@ -50,10 +54,18 @@ def parse_log(lines):
             ttime = datetime.strptime(ttime, TIME_FORMAT)
             delta = ttime - first_time
             entries.append(("merge", delta, processed))
-    
+        n_reviews = NUM_REVIEWS.match(line)
+        if n_reviews:
+            assert total_num_reviews == 0
+            total_num_reviews = n_reviews.group(1)
 
+    assert total_num_reviews != 0
     df1 = pd.DataFrame.from_records(entries, columns=["stage", "time", "numTokens"])
     df2 = pd.DataFrame.from_records(index_entries, columns=["time", "index_size", "total_index_size"])
+    df1["total_reviews"] = total_num_reviews 
+    df1["total_reviews"] = df1["total_reviews"].astype("int")
+    df2["total_reviews"] = total_num_reviews
+    df2["total_reviews"] = df2["total_reviews"].astype("int")
     return df1, df2
 
 def parse_log_file(filepath):
