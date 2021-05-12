@@ -102,49 +102,65 @@ public class ReviewSearch {
     /**
      * Returns a list of the id-s of the k most highly ranked reviews for the
      * given query, using the language model ranking function, smoothed using a
-     * mixture model with the given value of lambda* The list should be sorted by the ranking
+     * mixture model with the given value of lambda
+     * The list should be sorted by the ranking
      */
     public Enumeration<Integer> languageModelSearch(Enumeration<String> query, double lambda, int k) {
 
-        // maps each doc ID to the product of p(query|doc) using mixture model
-        var docToLm = new HashMap<Integer, Double>();
+        var queryWords = Utils.iteratorToStream(query.asIterator()).collect(Collectors.toList());
 
         var totalTokens = reader.getTokenSizeOfReviews();
-        while (query.hasMoreElements()) {
-            var term = query.nextElement();
-            var docPostingIt = reader.getReviewsWithToken(term);
+        // maps each query term `t` to cf_t, that is, corpus frequency of `t`
+        var termToCorpusFreq = queryWords.stream()
+                .collect(Collectors.toMap(
+                        Function.identity(), reader::getTokenCollectionFrequency
+                ));
 
-            var cft = reader.getTokenCollectionFrequency(term);
-            double probTermInCorpus = (double)cft/totalTokens;
+        // maps each query term to a map between documents which contain it, and frequency of said term within each
+        // of those documents
+        var termToDocToFreq = queryWords.stream()
+                .collect(Collectors.toMap(
+                        Function.identity(), term -> {
+                            var map = new HashMap<Integer, Integer>();
+                            var it = reader.getReviewsWithToken(term);
+                            while (it.hasMoreElements()) {
+                                var docId = it.nextElement();
+                                var freq = it.nextElement();
+                                var prev = map.put(docId, freq);
+                                assert prev == null;
+                            }
+                            return map;
+                        }
+                ));
 
-            while (docPostingIt.hasMoreElements()) {
-                var docId = docPostingIt.nextElement();
-                var tftd = docPostingIt.nextElement();
+        // find all docIDs that contain at least 1 of the query words - these are deemed candidates.
+        var involvedDocs = termToDocToFreq.values().stream()
+                .flatMap(m -> m.keySet().stream())
+                .collect(Collectors.toSet());
 
-                var docSize = reader.getReviewLength(docId);
-                assert docSize >= tftd;
-                double probTermInDoc = (double)tftd/docSize;
-
-                double mix = lambda * probTermInDoc + (1.0 - lambda) * probTermInCorpus;
-
-                // TODO BUG: what if a document is missing some terms? If lambda=1,
-                //           then the product should become 0. IF lambda<1, at the very least
-                //           should probably decrease. But this loop won't affect that doc's
-                //           vector at all!
-                docToLm.compute(docId, (_key, lm) -> {
-                    if (lm == null) {
-                        return mix;
-                    }
-                    return lm * mix;
-                });
-            }
-        }
-
-        return Utils.streamToEnumeration(docToLm.entrySet()
+        // calculate p(query|doc) for each document using mixture model
+        var docToScore = involvedDocs
                 .stream()
-                .sorted(Comparator.comparingDouble(e -> -e.getValue()))
+                .collect(Collectors.toMap(Function.identity(), docId -> {
+                    double score = 0.0;
+                    int docSize = reader.getReviewLength(docId);
+                    for (var term : queryWords) {
+                        // p(term|document) = tftd/docSize
+                        double mleTerm = (double)termToDocToFreq.get(term).getOrDefault(docId, 0) / docSize;
+
+                        // p(term|corpus) = corpus_ft/corpusSize
+                        double smoothTerm = (double)termToCorpusFreq.get(term) / totalTokens;
+                        score += lambda * mleTerm + (1.0 - lambda) * smoothTerm;
+                    }
+                    return score;
+                }));
+
+        // return an enumeration of the 'k' docIds with the highest score
+        return Utils.streamToEnumeration(docToScore.entrySet()
+                .stream().sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
                 .map(Map.Entry::getKey)
-                .limit(k));
+                .limit(k)
+        );
     }
 
     /**
