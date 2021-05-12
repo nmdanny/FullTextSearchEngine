@@ -7,6 +7,9 @@ interface DictionaryElement {
      *  Equivalently, this is the length of the posting list of this term. */
     int getTokenFrequency();
 
+    /** Returns the number of occurrences of this term within the corpus, including duplicates. */
+    int getTokenCollectionFrequency();
+
     /** Gets a pointer to the postings list of this term. */
     long getPostingsPointer();
 }

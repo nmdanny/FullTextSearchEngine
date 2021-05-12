@@ -105,13 +105,11 @@ public class IndexReader {
 	*/
 	public int getTokenCollectionFrequency(String token) {
 		token = token.toLowerCase();
-		int sum = 0;
-		var it = getReviewsWithToken(token);
-		while (it.hasMoreElements()) {
-			int _gap = it.nextElement();
-			sum += it.nextElement();
+		int dictIndex = dictionary.getIndexOfToken(token);
+		if (dictIndex < 0) {
+			return 0;
 		}
-		return sum;
+		return dictionary.getTokenCollectionFrequency(dictIndex);
 	}
 
 	/**

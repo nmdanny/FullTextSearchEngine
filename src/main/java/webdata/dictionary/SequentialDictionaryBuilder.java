@@ -93,11 +93,13 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
 
         assert (frontCodingResult.suffixPos >= 0) : "Can only support terms file with 2^31 chars";
 
+
         // begin a new block
         if (uniqueNumberOfTokens % Dictionary.BLOCK_SIZE == 0) {
             assert frontCodingResult.prefixLength == 0;
             var element = new FirstBlockElement(
                     postingListWriter.getCurrentTermDocumentFrequency(),
+                    postingListWriter.getCurrentTermDocumentCollectionFrequency(),
                     curTermPostingPtr,
                     frontCodingResult.suffixLength,
                     frontCodingResult.suffixPos
@@ -111,6 +113,7 @@ public class SequentialDictionaryBuilder implements Closeable, Flushable, Dictio
             var element = new OtherBlockElement(
                     this.lastFbe,
                     postingListWriter.getCurrentTermDocumentFrequency(),
+                    postingListWriter.getCurrentTermDocumentCollectionFrequency(),
                     (int)gap,
                     frontCodingResult.prefixLength,
                     frontCodingResult.suffixLength

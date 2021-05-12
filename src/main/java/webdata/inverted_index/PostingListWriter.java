@@ -14,6 +14,7 @@ public class PostingListWriter implements Closeable, Flushable {
     private int lastDocId;
     private String curTerm;
     private int curDocumentFrequency;
+    private int curDocumentCollectionFrequency;
     private long curPostingPtr;
 
     /**
@@ -28,6 +29,7 @@ public class PostingListWriter implements Closeable, Flushable {
         this.lastDocId = 0;
         this.curTerm = null;
         this.curDocumentFrequency = 0;
+        this.curDocumentCollectionFrequency = 0;
         this.curPostingPtr = 0;
     }
 
@@ -54,6 +56,7 @@ public class PostingListWriter implements Closeable, Flushable {
         encoder.write(gap);
         encoder.write(freq);
         curDocumentFrequency++;
+        curDocumentCollectionFrequency += freq;
         lastDocId = docId;
     }
 
@@ -67,6 +70,7 @@ public class PostingListWriter implements Closeable, Flushable {
         lastDocId = 0;
         curTerm = term;
         curDocumentFrequency = 0;
+        curDocumentCollectionFrequency = 0;
         curPostingPtr = encoder.getTotalNumBytesWritten();
         return curPostingPtr;
     }
@@ -77,6 +81,14 @@ public class PostingListWriter implements Closeable, Flushable {
             throw new IllegalStateException("Cannot get document term frequency before starting a term");
         }
         return curDocumentFrequency;
+    }
+
+    /** Returns the number of occurrences in which the current term was seen. */
+    public int getCurrentTermDocumentCollectionFrequency() {
+        if (curTerm == null) {
+            throw new IllegalStateException("Cannot get document term collection frequency before starting a term");
+        }
+        return curDocumentCollectionFrequency;
     }
 
     /** Returns the current term whose posting lists we're building, or null if no term was yet added. */

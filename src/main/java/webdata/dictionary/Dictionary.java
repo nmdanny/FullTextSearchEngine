@@ -121,6 +121,13 @@ public class Dictionary {
         return this.elements.get(index).getTokenFrequency();
     }
 
+    /** Returns the token collection frequency at given index, that is, the number
+     *  of occurrences within corpus for term at given index.
+     */
+    public int getTokenCollectionFrequency(int index) {
+        return this.elements.get(index).getTokenCollectionFrequency();
+    }
+
     /** Returns a sequence of docID and freq pairs of documents containing term at given index. */
     public Enumeration<Integer> getDocIdsAndFreqs(int index) throws IOException {
         var element = this.elements.get(index);
