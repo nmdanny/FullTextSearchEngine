@@ -83,7 +83,7 @@
             <resource>
                 <directory>analysis</directory>
                 <includes>
-                    <include>analysis.pdf</include>
+                    <include>analysis2.pdf</include>
                 </includes>
             </resource>
             <resource>

@@ -112,16 +112,28 @@ After merging, the final index takes \textbf{8.46 GB}. This means that during me
 
 \section{Index query operations}
 
-For each of the previous data-sets, I've measured the total time to perform 100 requests to \texttt{getReviewsWithToken} or \texttt{getTokenFrequency}, by using 100 tokens chosen independently and uniformly from the entire set of tokens in the dataset.(Chosen for each data-set before timing began)
+For each of the previous data-sets, I've measured the total time to perform 100 requests to \texttt{getReviewsWithToken} or \texttt{getTokenFrequency}, by using 100 terms chosen independently and uniformly from the entire set of tokens in the dataset.(Chosen for each data-set before timing began). It should be noted that I take a random subset of terms, and not tokens, so terms that appear frequently do not have a higher chance of being picked.
 
 
-The resulting plot can be seen \hyperref[fig:ops]{here}. I've repeated the same test(over the same few datasets) a couple of times to increase the
-confidence in the results. 
+The resulting plot can be seen \hyperref[fig:ops]{here}. I've repeated the same same test a couple of times, each time with different
+randomly chosen tokens - this can be visualized by several points of the same color within the same vertical line(same data-set). 
 
-Note that the X-axis is logarithmic. As we can see, \texttt{getTokenFrequency} runs in $O(\log N)$. For \texttt{getReviewsWithToken}, we see
-a similar trend at first, with a spike when dealing with larger datasets. The reason for this is that some of the tokens which are randomly chosen have
-long posting lists, so we can say the running time is $O(\log (N) + L)$ where $L$ is the average posting list length. (Moreover, scanning the posting lists
-uses disk IO, which is drastically slower than searching the in-memory dictionary)
+
+
+\begin{itemize}
+	\item \texttt{getTokenFrequency} has a logarithmic time complexity, this can be observed from the plot due to the fact that the running time increases much slower than the increase
+	in the number of reviews, in fact the running time is nearly constant aside from an outlier. This makes sense considering it is performing binary search within main memory.
+	
+	\item \texttt{getReviewsWithToken}, which includes time for iterating the enumeration, is slower by about 2 orders of magnitude than the above due to the disk IO while iterating over posting lists. The trend appears linear but there's an outlier for one of the review sizes. The running time is affected by 2 factors:
+	\begin{itemize}
+		\item Time taken to find the posting list pointer within
+		the dictionary via binary search, which is logarithmic.
+		\item Time taken to iterate over the posting lists. On the one hand, as we increase the review size, the posting lists of common terms get longer(a linear increase in the iteration running-time), on the other hand, the vocabulary size increases, and rarer terms have shorter posting lists.
+		
+		Overall, the former case seems to be more dominant, explaining the linear trend, but one of the reviews is an outlier, which is explained by a richer vocabulary, with shorter posting lists per term.
+	\end{itemize}
+\end{itemize}
+
 
 
 \begin{figure}[!htb]
