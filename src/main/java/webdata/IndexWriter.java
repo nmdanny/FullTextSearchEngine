@@ -31,8 +31,8 @@ public class IndexWriter {
 			try (var storage = ReviewStorage.inDirectory(dir);
 				 var mapper = new ProductIdToDocIdMapper(dir)) {
 
-              var parser = new SequentialReviewParser(8192, inputFileCharset).parse(inputFile);
-//                var parser = new LinesMemoryParser().parse(Path.of(inputFile), inputFileCharset);
+//              var parser = new SequentialReviewParser(8192, inputFileCharset).parse(inputFile);
+                var parser = new LinesMemoryParser().parse(Path.of(inputFile), inputFileCharset);
 
 				final int[] docId = {1};
 
