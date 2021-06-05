@@ -56,6 +56,7 @@ class Analysis {
         measure.accept("getReviewsWithToken", i -> {
             var enumm = reader.getReviewsWithToken(tokens.get(i));
             int numEntries = 0;
+            assert enumm.hasMoreElements();
             while (enumm.hasMoreElements()) {
                 enumm.nextElement();
                 ++numEntries;
@@ -70,6 +71,10 @@ class Analysis {
     }
 
     static String CSV_PATH = "analysis\\analysis.csv";
+
+    void clear() {
+        this.entries.clear();
+    }
 
     void dump_csv() throws IOException {
 
@@ -92,52 +97,69 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
+        doAnalysis();
+//        doIndex(args);
+
+
+    }
+
+    private static void doIndex(String[] args) {
+        var inputFile = args[0];
+        var indexDir = args[1];
+
+        var writer = new SlowIndexWriter();
+        writer.slowWrite(inputFile, indexDir);
+
+        var reader = new IndexReader(indexDir);
+
+        System.out.format("getTokenSizeOfReviews: %d\ngetNumberOfReviews: %d\n",
+                reader.getTokenSizeOfReviews(),
+                reader.getNumberOfReviews());
+
+        var max = new Object[]{0, ""};
+        reader.dictionary.terms().forEachRemaining(entry -> {
+            var term = entry.getKey();
+            if (term.length() > (int) max[0]) {
+                max[0] = term.length();
+                max[1] = term;
+                Utils.log("Found longer token \"%s\" of length %d", term, term.length());
+                if (term.length() <= 100) {
+                    return;
+                }
+                var it = reader.getReviewsWithToken(term);
+                while (it.hasMoreElements()) {
+                    int docId = it.nextElement();
+                    int freq = it.nextElement();
+                    Utils.log("\t\tappears at docId %d with freq %d", docId, freq);
+                }
+            }
+        });
+    }
+
+    final static int WARMUP_COUNT = 10;
+    final static int REPEAT_COUNT = 4;
+
+    private static void doAnalysis() throws IOException {
         var analyzer = new Analysis();
         var dirs = List.of(
-                Path.of("E:", "webdata_datasets", "all-long-varint"),
-                Path.of("E:", "webdata_datasets", "1000"),
-                Path.of("E:", "webdata_datasets", "music-long"),
-                Path.of("E:", "webdata_datasets", "videogames")
+                Path.of("E:", "webdata_datasets", "all-latest"),
+                Path.of("E:", "webdata_datasets", "1000-latest"),
+                Path.of("E:", "webdata_datasets", "music-latest"),
+                Path.of("E:", "webdata_datasets", "movies-tv-latest"),
+                Path.of("E:", "webdata_datasets", "books-latest"),
+                Path.of("E:", "webdata_datasets", "videogames-latest")
         );
-        for (var dir: dirs) {
-            analyzer.measureDir(dir.toString());
+        for (int i=0; i < WARMUP_COUNT; ++i) {
+            for (var dir : dirs) {
+                analyzer.measureDir(dir.toString());
+            }
+        }
+        analyzer.clear();
+        for (int i=0; i < REPEAT_COUNT; ++i) {
+            for (var dir : dirs) {
+                analyzer.measureDir(dir.toString());
+            }
         }
         analyzer.dump_csv();
-
-//        var inputFile = args[0];
-//        var indexDir = args[1];
-//
-//        var writer = new SlowIndexWriter();
-//        writer.slowWrite(inputFile, indexDir);
-//
-//        var reader = new IndexReader(indexDir);
-//
-//
-//        var entries = new HashMap<>();
-//
-//        System.out.format("getTokenSizeOfReviews: %d\ngetNumberOfReviews: %d\n",
-//                reader.getTokenSizeOfReviews(),
-//                reader.getNumberOfReviews());
-//
-//        var max = new Object[]{0, ""};
-//        reader.dictionary.terms().forEachRemaining(entry -> {
-//            var term = entry.getKey();
-//            if (term.length() > (int) max[0]) {
-//                max[0] = term.length();
-//                max[1] = term;
-//                Utils.log("Found longer token \"%s\" of length %d", term, term.length());
-//                if (term.length() <= 100) {
-//                    return;
-//                }
-//                var it = reader.getReviewsWithToken(term);
-//                while (it.hasMoreElements()) {
-//                    int docId = it.nextElement();
-//                    int freq = it.nextElement();
-//                    Utils.log("\t\tappears at docId %d with freq %d", docId, freq);
-//                }
-//            }
-//        });
-
-
     }
 }
