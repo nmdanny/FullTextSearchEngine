@@ -24,7 +24,7 @@ public class ReviewSearch {
     /** Calculate LTC of the query, that is, cosine-normalized vector of the elementwise product of
      *  logarithmic term frequency with standard inverse document frequency.
      */
-    private SparseVector queryLtc(List<String> query) {
+    SparseVector queryLtc(List<String> query) {
         // frequency of each term within the query string
         var naturalTf = query.stream()
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
@@ -62,7 +62,7 @@ public class ReviewSearch {
      *  their LNN. The returned vector only contains entries(log TFs) of terms that appear in the query, and not
      *  all terms of said documents.
      */
-    private Map<Integer, SparseVector> docLnns(List<String> query) {
+    Map<Integer, SparseVector> docLnns(List<String> query) {
         // maps each docId to a sparse vector representation of its log TF
         var map = new HashMap<Integer, HashMap<String, Double>>();
 

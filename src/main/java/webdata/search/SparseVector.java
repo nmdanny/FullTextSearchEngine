@@ -3,6 +3,7 @@ package webdata.search;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 
@@ -61,4 +62,23 @@ public class SparseVector {
         return elements;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SparseVector that = (SparseVector) o;
+        return elements.equals(that.elements);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(elements);
+    }
+
+    @Override
+    public String toString() {
+        return "SparseVector{" +
+                "elements=" + elements +
+                '}';
+    }
 }
