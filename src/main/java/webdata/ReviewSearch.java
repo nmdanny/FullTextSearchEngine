@@ -59,7 +59,8 @@ public class ReviewSearch {
 
     /** Calculates the LNN vector(logarithmic term frequency, no IDF/normalization) of each
      *  document which contains any word within the query, returning a mapping between document IDs to
-     *  their LNN
+     *  their LNN. The returned vector only contains entries(log TFs) of terms that appear in the query, and not
+     *  all terms of said documents.
      */
     private Map<Integer, SparseVector> docLnns(List<String> query) {
         // maps each docId to a sparse vector representation of its log TF
@@ -91,12 +92,15 @@ public class ReviewSearch {
         var queryVec = queryLtc(q);
         var docLtcs = docLnns(q);
 
-
         return Utils.streamToEnumeration(docLtcs.entrySet()
-                    .stream()
-                    .sorted(Comparator.comparingDouble(entry -> -queryVec.dot(entry.getValue())))
-                    .map(Map.Entry::getKey)
-                    .limit(k));
+                .stream()
+                // compare by ranks in descending order, break ties by review IDs in ascending order.
+                .sorted(Comparator.comparingDouble(
+                        (Map.Entry<Integer, SparseVector> entry)-> queryVec.dot(entry.getValue())).reversed()
+                        .thenComparingInt(Map.Entry::getKey)
+                )
+                .map(Map.Entry::getKey)
+                .limit(k));
     }
 
     /**
@@ -157,7 +161,9 @@ public class ReviewSearch {
 
         // return an enumeration of the 'k' docIds with the highest score
         return Utils.streamToEnumeration(docToScore.entrySet()
-                .stream().sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
+                .stream()
+                .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed()
+                        .thenComparingInt(Map.Entry::getKey))
                 .map(Map.Entry::getKey)
                 .limit(k)
         );
