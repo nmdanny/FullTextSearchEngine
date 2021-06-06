@@ -3,6 +3,7 @@ package webdata;
 import org.junit.jupiter.api.Test;
 import webdata.search.SparseVector;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -104,6 +105,62 @@ class ReviewSearchTest {
 
     @Test
     void languageModelSearch() {
+        var query = List.of("enjoy", "your", "vacation");
+        var queryEnum = Utils.streamToEnumeration(query.stream());
+
+        var indexReader = mock(IndexReader.class);
+
+        when(indexReader.getTokenSizeOfReviews()).thenReturn(5000000);
+
+        when(indexReader.getTokenCollectionFrequency("vacation")).thenReturn(100000);
+        when(indexReader.getTokenCollectionFrequency("enjoy")).thenReturn(200000);
+        when(indexReader.getTokenCollectionFrequency("your")).thenReturn(500000);
+        when(indexReader.getTokenCollectionFrequency("very")).thenReturn(500000);
+        when(indexReader.getTokenCollectionFrequency("friend")).thenReturn(500000);
+
+
+        // assume we have a document with docID 3:
+        // "enjoy enjoy enjoy enjoy vacation vacation very very your friend"
+        // which means we have the tokens:
+        // (enjoy,4) (vacation,2) (very, 2) (your,1) (friend,1)
+
+        when(indexReader.getReviewLength(3)).thenReturn(10);
+        when(indexReader.getReviewsWithToken("enjoy")).thenAnswer(_unused -> Utils.streamToEnumeration(
+                Stream.of(3, 4)
+        ));
+        when(indexReader.getReviewsWithToken("vacation")).thenAnswer(_unused -> Utils.streamToEnumeration(
+                Stream.of(3, 2)
+        ));
+        when(indexReader.getReviewsWithToken("very")).thenAnswer(_unused -> Utils.streamToEnumeration(
+                Stream.of(3, 2)
+        ));
+        when(indexReader.getReviewsWithToken("your")).thenAnswer(_unused -> Utils.streamToEnumeration(
+                Stream.of(3, 1)
+        ));
+        when(indexReader.getReviewsWithToken("friend")).thenAnswer(_unused -> Utils.streamToEnumeration(
+                Stream.of(3, 1)
+        ));
+
+
+        var search = new ReviewSearch(indexReader);
+        var scores = search.getLanguageModelScores(new HashSet<>(query), 0.5);
+        for (var kvp: scores.entrySet()) {
+            var rounded = Math.round(kvp.getValue() * 1e5)/1e5;
+            kvp.setValue(rounded);
+        }
+
+        var expected = Map.of(
+                3, 0.00242
+        );
+
+        assertEquals(expected, scores);
+
+
+        var result = search.languageModelSearch(queryEnum, 0.5, 1000);
+        var resultList = Utils.iteratorToStream(result.asIterator()).collect(Collectors.toList()) ;
+
+        assertIterableEquals(List.of(3), resultList);
+
     }
 
     @Test
