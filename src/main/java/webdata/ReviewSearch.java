@@ -5,7 +5,6 @@ import webdata.search.SparseVector;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 public class ReviewSearch {
@@ -104,25 +103,23 @@ public class ReviewSearch {
     }
 
     /**
-     * Returns a list of the id-s of the k most highly ranked reviews for the
-     * given query, using the language model ranking function, smoothed using a
-     * mixture model with the given value of lambda
-     * The list should be sorted by the ranking
+     * @param queryWords A set of query words
+     * @return A map between query words and their frequencies within corpus(including repetitions)
      */
-    public Enumeration<Integer> languageModelSearch(Enumeration<String> query, double lambda, int k) {
-
-        var queryWords = Utils.iteratorToStream(query.asIterator()).collect(Collectors.toList());
-
-        var totalTokens = reader.getTokenSizeOfReviews();
-        // maps each query term `t` to cf_t, that is, corpus frequency of `t`
-        var termToCorpusFreq = queryWords.stream()
+    Map<String, Integer> getCorpusFrequenciesForTerms(Set<String> queryWords) {
+        return queryWords.stream()
                 .collect(Collectors.toMap(
                         Function.identity(), reader::getTokenCollectionFrequency
                 ));
+    }
 
-        // maps each query term to a map between documents which contain it, and frequency of said term within each
-        // of those documents
-        var termToDocToFreq = queryWords.stream()
+    /**
+     * @param queryWords A set of query words
+     * @return A map between each query word, to a map between IDs of documents that contain said word
+     *         and their frequencies
+     */
+    Map<String, HashMap<Integer, Integer>> getTermToDocFrequencies(Set<String> queryWords) {
+        return queryWords.stream()
                 .collect(Collectors.toMap(
                         Function.identity(), term -> {
                             var map = new HashMap<Integer, Integer>();
@@ -136,6 +133,25 @@ public class ReviewSearch {
                             return map;
                         }
                 ));
+    }
+
+    /**
+     * @param queryWords A set of query words
+     * @param lambda A decimal between 0 and 1 indicating how how much to factor the MLE term
+     *               in contrast to the smoothing term.
+     * @return A mapping between document IDs that have a non-empty intersection with the query words,
+     *         to their scores under a unigram language model.
+     */
+    Map<Integer, Double> getLanguageModelScores(Set<String> queryWords, double lambda) {
+
+
+        var totalTokens = reader.getTokenSizeOfReviews();
+        // maps each query term `t` to cf_t, that is, corpus frequency of `t`
+        var termToCorpusFreq = getCorpusFrequenciesForTerms(queryWords);
+
+        // maps each query term to a map between documents which contain it, and frequency of said term within each
+        // of those documents
+        var termToDocToFreq = getTermToDocFrequencies(queryWords);
 
         // find all docIDs that contain at least 1 of the query words - these are deemed candidates.
         var involvedDocs = termToDocToFreq.values().stream()
@@ -143,21 +159,33 @@ public class ReviewSearch {
                 .collect(Collectors.toSet());
 
         // calculate p(query|doc) for each document using mixture model
-        var docToScore = involvedDocs
+        return involvedDocs
                 .stream()
                 .collect(Collectors.toMap(Function.identity(), docId -> {
-                    double score = 0.0;
+                    double score = 1.0;
                     int docSize = reader.getReviewLength(docId);
                     for (var term : queryWords) {
                         // p(term|document) = tftd/docSize
-                        double mleTerm = (double)termToDocToFreq.get(term).getOrDefault(docId, 0) / docSize;
+                        double mleTerm = (double) termToDocToFreq.get(term).getOrDefault(docId, 0) / docSize;
 
                         // p(term|corpus) = corpus_ft/corpusSize
-                        double smoothTerm = (double)termToCorpusFreq.get(term) / totalTokens;
-                        score += lambda * mleTerm + (1.0 - lambda) * smoothTerm;
+                        double smoothTerm = (double) termToCorpusFreq.get(term) / totalTokens;
+                        score *= lambda * mleTerm + (1.0 - lambda) * smoothTerm;
                     }
                     return score;
                 }));
+    }
+
+    /**
+     * Returns a list of the id-s of the k most highly ranked reviews for the
+     * given query, using the language model ranking function, smoothed using a
+     * mixture model with the given value of lambda
+     * The list should be sorted by the ranking
+     */
+    public Enumeration<Integer> languageModelSearch(Enumeration<String> query, double lambda, int k) {
+        var queryWords = Utils.iteratorToStream(query.asIterator()).collect(Collectors.toSet());
+
+        var docToScore = getLanguageModelScores(queryWords, lambda);
 
         // return an enumeration of the 'k' docIds with the highest score
         return Utils.streamToEnumeration(docToScore.entrySet()
