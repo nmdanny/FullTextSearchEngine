@@ -13,12 +13,17 @@ import java.util.stream.Collectors;
 public class SparseVector {
     private final Map<String, Double> elements;
 
+    private static final double EPSILON = 1e-7;
+
     public SparseVector(Map<String, Double> elements) {
         this.elements = Collections.unmodifiableMap(elements);
     }
 
     public SparseVector cosNormalized() {
         double norm = cosNorm();
+        if (Math.abs(norm) < EPSILON) {
+            return new SparseVector(new HashMap<>(elements));
+        }
         return new SparseVector(
                 elements.entrySet()
                         .stream()

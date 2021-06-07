@@ -42,7 +42,7 @@ public class ReviewSearch {
                     1.0 + Math.log10(tf)
             );
 
-            double dft = reader.getTokenFrequency(term);
+            int dft = reader.getTokenFrequency(term);
             if (dft == 0) {
                 continue;
             }
