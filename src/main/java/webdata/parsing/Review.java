@@ -3,7 +3,6 @@ package webdata.parsing;
 import webdata.Token;
 
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -23,7 +22,7 @@ public class Review {
     private int totalNumberOfTokens;
     private Map<String, Long> tokenToFreq;
 
-    public static Review fromFields(HashMap<String, String> fields) {
+    public static Review fromFields(Map<String, String> fields) {
         String productId = fields.getOrDefault("productId", "").toLowerCase();
         String helpfulness = fields.getOrDefault("helpfulness", "0/1");
         String score = fields.getOrDefault("score", "1");
