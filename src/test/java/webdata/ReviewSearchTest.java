@@ -1,8 +1,11 @@
 package webdata;
 
 import org.junit.jupiter.api.Test;
+import webdata.parsing.Review;
 import webdata.search.SparseVector;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -164,6 +167,68 @@ class ReviewSearchTest {
     }
 
     @Test
-    void productSearch() {
+    void productSearch() throws IOException {
+        var tmpDir = Files.createTempDirectory("productSearch");
+
+        var reviewStream = Stream.of(
+                Review.fromFields(Map.of(
+                        "productId", "12345ABCDE",
+                        "helpfulness", "1/10",
+                        "score", "5",
+                        "text", "this is good phone"
+                )),
+                Review.fromFields(Map.of(
+                        "productId", "12345ABCDE",
+                        "helpfulness", "1/10",
+                        "score", "5",
+                        "text", "this phone is amazing"
+                )),
+                Review.fromFields(Map.of(
+                        "productId", "12345ABCDE",
+                        "helpfulness", "83/100",
+                        "score", "1",
+                        "text", "this phone is terrible and has many glitches."
+                )),
+                Review.fromFields(Map.of(
+                        "productId", "1234567890",
+                        "helpfulness", "93/100",
+                        "score", "5",
+                        "text", "this phone is OK"
+                ))
+        );
+
+
+        new IndexWriter().writeFromReviews(reviewStream, tmpDir.toString());
+        var indexReader = new IndexReader(tmpDir.toString());
+        var search = new ReviewSearch(indexReader);
+
+        var results = search.productSearch(Utils.streamToEnumeration(
+                Stream.of("phone")
+        ), 100);
+
+        assertIterableEquals(List.of("1234567890", "12345ABCDE"), results);
+    }
+
+    /** test for edge-case where the index is empty */
+    @Test
+    void operationsEmptyIndex() throws IOException {
+
+        var tmpDir = Files.createTempDirectory("operationsEmptyIndex");
+
+        Stream<Review> reviewStream = Stream.empty();
+        new IndexWriter().writeFromReviews(reviewStream, tmpDir.toString());
+        var indexReader = new IndexReader(tmpDir.toString());
+        var search = new ReviewSearch(indexReader);
+
+        var prods = search.productSearch(Utils.streamToEnumeration(Stream.empty()), 10);
+        var prods2 = search.productSearch(Utils.streamToEnumeration(Stream.of("a", "b")), 10);
+        var prods3 = search.vectorSpaceSearch(Utils.streamToEnumeration(Stream.of("a", "b")), 10);
+        var prods4 = search.languageModelSearch(Utils.streamToEnumeration(Stream.of("a", "b")), 0.5, 10);
+
+        assertTrue(prods.isEmpty());
+        assertTrue(prods2.isEmpty());
+        assertFalse(prods3.hasMoreElements());
+        assertFalse(prods4.hasMoreElements());
+
     }
 }

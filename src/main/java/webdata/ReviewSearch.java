@@ -4,6 +4,7 @@ import webdata.search.SparseVector;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 
@@ -197,11 +198,88 @@ public class ReviewSearch {
         );
     }
 
+    /** Returns the score of a product, defined as the weighted average of its associated review scores, using
+     *  their helpfulness as weights. */
+    double getProductRank(String productId) {
+
+        Iterable<Integer> productReviews = () -> reader.getProductReviews(productId).asIterator();
+        double sumHelpfulness = 0;
+        double sumScoreTimesHelpfulness = 0;
+        for (int reviewID : productReviews) {
+            double score = reader.getReviewScore(reviewID);
+            int helpfulnessNum = reader.getReviewHelpfulnessNumerator(reviewID);
+            int helpfulnessDenom = reader.getReviewHelpfulnessDenominator(reviewID);
+
+            // use helpfulness of 0.5 if no helpfulness is defined for a particular review
+            double helpfulness = 0.5;
+            if (helpfulnessDenom != 0) {
+                helpfulness = (double)helpfulnessNum / helpfulnessDenom;
+            }
+            sumHelpfulness += helpfulness;
+            sumScoreTimesHelpfulness += score * helpfulness;
+        }
+
+        double rank = sumScoreTimesHelpfulness / sumHelpfulness;
+        if (Double.isFinite(rank)) {
+            return rank;
+        }
+        // in case of division by 0 (helpfulness of all reviews is nearly 0)
+        return 0;
+
+    }
+
     /**
      * Returns a list of the id-s of the k most highly ranked productIds for the
      * given query using a function of your choice* The list should be sorted by the ranking
      */
     public Collection<String> productSearch(Enumeration<String> query, int k) {
-        return List.of();
+
+        var queryWords = Utils.iteratorToStream(query.asIterator()).collect(Collectors.toList());
+
+        var queryVec = queryLtc(queryWords);
+        var docLtcs = docLnns(queryWords);
+
+        // find the IDs of all involved products.
+        var prodIDs = docLtcs.keySet()
+                .stream()
+                .map(reader::getProductId)
+                .collect(Collectors.toSet());
+
+        // create a mapping between products and the inverse of their number of reviews
+        SparseVector prodToInverseNumReviews = new SparseVector(
+                prodIDs.stream()
+                    .map(prodId -> {
+                        var numReviews = Utils.iteratorToStream(reader.getProductReviews(prodId).asIterator())
+                                .count();
+                        return Map.entry(prodId, 1.0 / numReviews);
+                    })
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+        );
+
+        // create a mapping between products and the sum of the lnn.ltc scores between their associated reviews and the query
+        SparseVector prodToSumDots = new SparseVector(
+                docLtcs.entrySet().stream()
+                    .map(entry -> {
+                        var prodId = reader.getProductId(entry.getKey());
+                        var dot = queryVec.dot(entry.getValue());
+                        return Map.entry(prodId, dot);
+                    })
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey, Map.Entry::getValue, Double::sum
+                ))
+        );
+
+        SparseVector relevancyScores = prodToSumDots.multiply(prodToInverseNumReviews);
+
+        return relevancyScores.elements().entrySet()
+                .stream()
+                .sorted(
+                        Comparator.comparingDouble((ToDoubleFunction<Map.Entry<String, Double>>) Map.Entry::getValue).reversed())
+                // take the k most relevant productIDs
+                .limit(k)
+                .map(Map.Entry::getKey)
+                // sort them by the ranking function(step 2)
+                .sorted(Comparator.comparingDouble(this::getProductRank).reversed())
+                .collect(Collectors.toList());
     }
 }
