@@ -125,6 +125,10 @@ public class ExternalSorter<T> implements Closeable {
             T getElement() { return element; }
         }
 
+        if (numBlocks == 0) {
+            // For the edge case of no spliterators
+            return Spliterators.emptySpliterator();
+        }
 
         /* the heap includes one element from each spliterator, and the index of the spliterator */
         var heap = new PriorityQueue<ElementFrom>(numBlocks,
