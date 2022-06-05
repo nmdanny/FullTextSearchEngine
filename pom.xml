@@ -9,6 +9,14 @@
     <version>1.0</version>
     <packaging>jar</packaging>
 
+    <distributionManagement>
+    <repository>
+        <id>github</id>
+        <name>GitHub nmdanny Apache Maven Packages</name>
+        <url>https://maven.pkg.github.com/nmdanny/FullTextSearchEngine</url>
+    </repository>
+    </distributionManagement>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
