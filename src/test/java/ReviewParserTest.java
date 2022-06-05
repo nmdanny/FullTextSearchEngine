@@ -1,5 +1,3 @@
-package test;
-
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import webdata.parsing.*;
@@ -26,7 +24,7 @@ class ReviewParserTest {
 
     @Test
     void canParseDataset() throws IOException {
-        var ds = fileToReviewStream("datasets\\1000.txt", 1024 * 10, 32)
+        var ds = fileToReviewStream(Path.of("datasets", "1000.txt").toString(), 1024 * 10, 32)
                 .collect(Collectors.toList());
 
             var raw = Files.readString(Path.of("datasets", "1000.txt"), DATASET_ENCODING);
@@ -37,6 +35,7 @@ class ReviewParserTest {
         assertIterableEquals(ds, ds2);
     }
 
+    @Disabled
     @Test
     void canParse1MbDataset() throws IOException {
         int bufSize = 1024 * 256;
@@ -47,6 +46,7 @@ class ReviewParserTest {
         assertEquals(1079, count);
     }
 
+    @Disabled
     @Test
     void canParse100MbDataset() throws IOException {
         int bufSize = 1024 * 1024;
